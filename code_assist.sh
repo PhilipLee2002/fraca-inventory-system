@@ -1,5 +1,7 @@
 #!/bin/bash
+
 code_assist() {
+    sleep 10
     {
         echo "REFERENCE DOC:"
         cat development_reference.md

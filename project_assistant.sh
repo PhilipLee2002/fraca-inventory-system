@@ -1,5 +1,6 @@
 #!/bin/bash
 assist() {
+    sleep 10
     {
         echo "=== PROJECT REFERENCE ==="
         cat development_reference.md

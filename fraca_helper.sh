@@ -1,5 +1,7 @@
 #!/bin/bash
+
 ask_fraca() {
+    sleep 10
     cat development_reference.md | gemini "$1"
 }
 get_phase() {

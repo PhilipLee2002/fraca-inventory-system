@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+       Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // admin, manager, staff
-            $table->text('permissions')->nullable(); // JSON of permissions
+            $table->string('name')->unique();
+            // Check if this line exists:
+            $table->string('description')->nullable(); // ← THIS LINE
             $table->timestamps();
         });
     }
