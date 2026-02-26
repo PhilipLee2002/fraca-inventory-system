@@ -19,17 +19,23 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
+        $quantity = $this->faker->numberBetween(0, 100);
+        
         return [
             'name' => $this->faker->word(),
             'sku' => $this->faker->unique()->ean8(),
+            'barcode' => $this->faker->unique()->ean13(),
             'description' => $this->faker->sentence(),
             'category_id' => Category::factory(),
             'supplier_id' => Supplier::factory(),
             'cost_price' => $this->faker->randomFloat(2, 5, 100),
             'selling_price' => $this->faker->randomFloat(2, 10, 200),
-            'quantity' => $this->faker->numberBetween(0, 100),
+            'current_stock' => $quantity,
+            'initial_stock' => $quantity,
             'reorder_level' => $this->faker->numberBetween(5, 20),
-            'unit' => $this->faker->randomElement(['piece', 'kg', 'box']),
+            'minimum_stock' => $this->faker->numberBetween(1, 5),
+            'unit_of_measurement' => $this->faker->randomElement(['piece', 'kg', 'box', 'liter']),
+            'is_active' => true,
         ];
     }
 }

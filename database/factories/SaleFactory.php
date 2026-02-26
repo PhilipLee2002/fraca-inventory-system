@@ -22,11 +22,16 @@ class SaleFactory extends Factory
         return [
             'customer_id' => Customer::factory(),
             'user_id' => User::factory(),
-            'invoice_number' => 'INV-' . $this->faker->unique()->numberBetween(1000, 9999),
-            'total_amount' => 0,
-            'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
+            'invoice_number' => 'INV-' . $this->faker->unique()->numberBetween(100000, 999999),
+            'sale_date' => $this->faker->dateTimeBetween('-30 days', 'now'),
+            'total_amount' => $this->faker->randomFloat(2, 50, 5000),
+            'shipping_cost' => $this->faker->randomFloat(2, 0, 50),
+            'tax_amount' => $this->faker->randomFloat(2, 0, 250),
+            'discount_amount' => $this->faker->randomFloat(2, 0, 100),
             'payment_method' => $this->faker->randomElement(['cash', 'card', 'transfer']),
-            'notes' => $this->faker->sentence(),
+            'payment_status' => $this->faker->randomElement(['paid', 'pending', 'overdue']),
+            'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
+            'notes' => $this->faker->optional()->sentence(),
         ];
     }
 }
