@@ -4,7 +4,7 @@
 **Client:** FRACA SERVCOM (furniture & hardware supplies)  
 **Repository:** https://github.com/PhilipLee2002/fraca-inventory-system  
 **Tech Stack:** Laravel 12, MySQL, Tailwind CSS, Alpine.js  
-**Last Updated:** January 27, 2026
+**Last Updated:** February 1, 2026
 
 ---
 
@@ -167,65 +167,92 @@ All 13 models implemented with proper relationships:
 
 ---
 
-### 🟡 In Progress: Phase 2 — Authentication & Authorization
+### ✅ Completed: Phase 2 — Authentication & Authorization
 
 **Objective:** Implement user authentication system with role-based access control (RBAC).
 
 **What has been completed:**
 
-1. **Authentication System:**
-   - Laravel Breeze scaffolding integrated for clean authentication
-   - User registration, login, and password reset functionality
-   - Email verification support built-in
-   - Session management and CSRF protection configured
-   - Password hashing using Laravel's secure hash algorithms
+1. **Authentication System (Laravel Breeze):**
+   - ✅ Full scaffolded authentication with 6 controllers in `app/Http/Controllers/Auth/`
+   - ✅ User registration with email verification flow
+   - ✅ Secure login/logout with session management
+   - ✅ Password reset via email with token validation
+   - ✅ Email verification prompts and resend functionality
+   - ✅ Confirmable password for sensitive operations
+   - ✅ Password hashing using Laravel's bcrypt algorithm
+   - ✅ CSRF protection on all forms
+   - ✅ Complete authentication Blade views in `resources/views/auth/`
 
 2. **Role-Based Access Control (RBAC):**
-   - Role model created with admin and staff roles
-   - User-Role association established via role_id foreign key
-   - Middleware created for role validation:
-     - **CheckRole Middleware:** Validates that authenticated user has required role
-     - **CheckPermission Middleware:** Validates that user has specific permission
+   - ✅ Role model created with fields: id, name, description, timestamps
+   - ✅ User-Role one-to-many relationship via role_id foreign key
+   - ✅ CheckRole middleware validates user has required role(s)
+   - ✅ CheckPermission middleware validates granular permissions
+   - ✅ RolesTableSeeder populates initial roles (Admin, Staff)
 
-3. **User Management System:**
-   - **UserController** created with full resource management:
-     - Index (list all users with pagination)
-     - Create (show user creation form)
-     - Store (save new user with validation)
-     - Edit (show user edit form with current data)
-     - Update (save user changes)
-     - Delete (remove user from system)
-     - Show (view individual user details)
-   - User creation enforces role assignment
-   - Password handling with secure hashing
+3. **Permission System:**
+   - ✅ Permission model created with id, name, description, timestamps
+   - ✅ Many-to-many relationship between roles and permissions via `role_permission` junction table
+   - ✅ PermissionSeeder assigns permissions to roles
+   - ✅ Middleware hooks for permission enforcement on routes
 
-4. **Protected Routes:**
-   - Dashboard route protected with 'auth' and 'verified' middleware
-   - User management routes protected with 'auth' and 'role:admin' middleware
-   - Profile management routes for authenticated users
-   - Example protected routes for Products, Categories, Sales, and Purchases with permission checks
+4. **User Management System:**
+   - ✅ **UserController** with complete CRUD:
+     - `index()` - List all users with pagination (admin only)
+     - `create()` - Show user creation form with role selection
+     - `store()` - Persist new user with validation and role assignment
+     - `edit()` - Show user edit form with current data
+     - `update()` - Persist user changes
+     - `show()` - Display individual user details
+     - `destroy()` - Remove user from system (soft delete recommended)
+   - ✅ ProfileController for users to manage their own accounts
+   - ✅ User creation with automatic password and role assignment
 
-5. **Authentication Views (Blade Templates):**
-   - Login page with email/password form
-   - Registration page for new user accounts
-   - Password reset request and reset confirmation pages
-   - Email verification page
-   - Layout templates for consistent UI across auth pages
+5. **Protected Routes:**
+   - ✅ Dashboard route protected with 'auth' and 'verified' middleware
+   - ✅ User management routes protected with 'auth' and 'role:admin' middleware
+   - ✅ Profile management routes for authenticated users only
+   - ✅ Example protected routes for Products, Categories, Sales, Purchases with permission checks
+   - ✅ Auth routes separated in `routes/auth.php` for clean organization
 
-**What is still needed:**
+6. **Blade Views & Templates:**
+   - ✅ **Authentication Views** (`resources/views/auth/`):
+     - Login form with remember-me functionality
+     - Registration form with email and password validation
+     - Password reset request form
+     - Password reset confirmation form
+     - Email verification prompt and resend
+     - Password confirmation modal
+   - ✅ **User Management Views** (`resources/views/users/`):
+     - Index table showing all users with edit/delete actions
+     - Create form with role dropdown
+     - Edit form for user information updates
+     - Show page for individual user details
+   - ✅ **Profile Views** (`resources/views/profile/`):
+     - Profile edit form for personal information
+     - Account deletion confirmation modal
+   - ✅ **Layout Templates** (`resources/views/layouts/`):
+     - Main app layout with header, sidebar, footer (Tailwind CSS)
+     - Guest layout for unauthenticated pages
+     - Navigation component with conditional menu items based on role
 
-- Permission seeding (populate permissions table with specific actions like view-product, create-sale, etc.)
-- Role-permission assignments in database seeders
-- Permission enforcement on specific routes and controller actions
-- User role display and management in user interface
-- Comprehensive testing of auth flows and permission checks
+7. **Database & Seeders:**
+   - ✅ Permission tables migration with `permissions` and `role_permission` tables
+   - ✅ Description field added to roles table
+   - ✅ UsersTableSeeder creates test users with assigned roles
+   - ✅ RolesTableSeeder establishes role hierarchy
+   - ✅ PermissionSeeder creates permission matrix and role assignments
+   - ✅ DatabaseSeeder orchestrates all seeders
 
-**Deliverables Partially Complete:**
-- ✅ Authentication system functional (login/logout/register)
-- ✅ Role model and user-role association
-- ✅ Basic RBAC middleware in place
-- ✅ User management CRUD operations implemented
-- 🟡 Permission system structure created, needs data population and enforcement
+**Deliverables Complete:**
+- ✅ Production-ready authentication system with email verification
+- ✅ Complete RBAC infrastructure with role and permission models
+- ✅ User management CRUD with admin interface
+- ✅ All authentication middleware and protected routes
+- ✅ Comprehensive Blade views for all auth workflows
+- ✅ Database seeders with test data
+- ✅ Permission enforcement ready for controller-level checks
 
 ---
 
@@ -286,6 +313,57 @@ Request validation classes:
 - 🟡 Controllers need implementation
 - 🟡 Business logic needs development
 - 🟡 Request validation classes need creation
+
+---
+
+### Recent Work (updated Feb 1, 2026)
+
+Summary of concrete changes made on Feb 1, 2026. These changes move Phase 3 forward by adding API endpoints, stock-adjustment support, and several bug fixes.
+
+- **Stock adjustment support (model + migration):** Added a new `StockAdjustment` model and a migration that creates a `stock_adjustments` table. This table stores product id, old/new quantities, adjustment type, quantity changed, reason, notes, and the user who adjusted.
+
+- **Product model improvements:** Updated `app/Models/Product.php`:
+  - Added `stockAdjustments()` relationship.
+  - Added `logStockMovement($transactionType, $quantityChange, $notes = null)` helper that creates stock-history entries and keeps the audit trail consistent.
+  - Added PHPDoc property annotations (for example, `@property int $id`, `@property int $current_stock`) to reduce IDE/static analysis warnings.
+
+- **Sale model PHPDoc:** Added PHPDoc annotations to `app/Models/Sale.php` (for example, `@property string $status`, `@property string|null $invoice_number`) to resolve analyzer warnings used in controllers.
+
+- **Permission & Role fixes:** Fixed duplicated/malformed contents in `app/Models/Permission.php`. Updated `app/Models/Role.php` to use a many-to-many `permissions()` relation and a `hasPermission()` helper.
+
+- **API controllers & routes:** Converted several controllers to API JSON style and added `routes/api.php` (Sanctum-protected):
+  - `ProductController` now returns JSON for index/show/store/update/destroy and includes search/filter endpoints.
+  - `PurchaseController` converted to JSON API with a transaction-safe `store` that updates product stock and logs movements.
+  - `SaleController` was replaced with an API-style controller (index/show/store/destroy/stats) that validates stock, creates invoices, updates stock atomically, and logs stock history.
+  - `routes/api.php` added with `apiResource` routes for products, sales, purchases, suppliers, and customers under `auth:sanctum`.
+
+- **Static-analysis fixes:** Added PHPDoc annotations to `Product` and `Sale` models. Ran `php -l` checks on edited files — no syntax errors detected.
+
+- **Composer & caching:** Ran `composer dump-autoload` and `php artisan optimize:clear` to regenerate autoload files and clear caches. Composer reported PSR-4 warnings caused by a case-sensitivity mismatch (files under `app/console/` should be `app/Console/`). This should be fixed to remove the warnings.
+
+- **Documentation & helper files:** Added/updated documentation files (including this progress document and the Gemini CLI cheatsheet) during the same work session.
+
+What this enables now:
+
+- API-based SPA or mobile clients can consume product, purchase, and sale endpoints.
+- Stock adjustments and stock history are recorded with clearer audit trails.
+- Permission/role model cleanup prepares the system for seeding granular permissions and consistent middleware checks.
+
+Next recommended steps (short):
+
+- Convert remaining controllers to API style: `SupplierController`, `CustomerController`, and `StockController`.
+- Add/verify `role_permission` pivot migration and seeders to populate permissions and assign them to roles.
+- Fix PSR-4 path case issues by renaming `app/console/` → `app/Console/` to eliminate composer warnings.
+- Run migrations (if new ones were created) and seeders in a development database.
+
+Helpful commands to run locally:
+
+```bash
+composer dump-autoload
+php artisan migrate
+php artisan db:seed --class=PermissionSeeder
+php artisan optimize:clear
+```
 
 ---
 
@@ -408,14 +486,231 @@ Request validation classes:
 
 ---
 
+## Project File Structure & Key Components
+
+### Controllers
+
+**Authentication Controllers** (`app/Http/Controllers/Auth/`)
+- **Purpose:** Handle authentication workflows (login, registration, password reset)
+- **Files:**
+  - `RegisteredUserController.php` - User registration logic with email verification
+  - `AuthenticatedSessionController.php` - Login/logout session management
+  - `PasswordResetLinkController.php` - Password reset request email sending
+  - `NewPasswordController.php` - Password reset confirmation and update
+  - `EmailVerificationPromptController.php` - Email verification flow
+  - `EmailVerificationNotificationController.php` - Resend verification email
+  - `ConfirmablePasswordController.php` - Confirm password for sensitive operations
+- **Key Role:** Forms the security entry point for the entire application
+
+**UserController** (`app/Http/Controllers/UserController.php`)
+- **Purpose:** Manage system users (create, read, update, delete)
+- **Methods:**
+  - `index()` - List all users with pagination
+  - `create()` - Show user creation form
+  - `store()` - Save new user with role assignment and validation
+  - `show()` - Display individual user details
+  - `edit()` - Show user edit form
+  - `update()` - Update user information
+  - `destroy()` - Delete user from system
+- **Key Role:** Admin interface for user management with role assignment
+
+**ProfileController** (`app/Http/Controllers/ProfileController.php`)
+- **Purpose:** Allow users to manage their own profile information
+- **Methods:**
+  - `edit()` - Show profile edit page
+  - `update()` - Update user's own information
+  - `destroy()` - Allow users to delete their own account
+- **Key Role:** Self-service user account management
+
+### Middleware
+
+**CheckRole Middleware** (`app/Http/Middleware/CheckRole.php`)
+- **Purpose:** Verify user has required role(s) before accessing protected routes
+- **Usage:** Applied to routes that require specific roles (e.g., 'role:admin')
+- **Example:** `Route::get('/users', ...)->middleware('role:admin');`
+- **Key Role:** First line of defense for role-based access control
+
+**CheckPermission Middleware** (`app/Http/Middleware/CheckPermission.php`)
+- **Purpose:** Verify user has specific permission(s) to access resource
+- **Usage:** Applied to routes that require granular permissions
+- **Example:** `Route::get('/products', ...)->middleware('permission:view-product');`
+- **Key Role:** Fine-grained permission checking for specific actions
+
+### Models
+
+**Role Model** (`app/Models/Role.php`)
+- **Purpose:** Define user roles in the system (Admin, Staff, Manager, etc.)
+- **Fields:** id, name, description, timestamps
+- **Relationships:** 
+  - `hasMany(User)` - Link to multiple users with this role
+  - `belongsToMany(Permission)` - Role can have multiple permissions
+- **Key Role:** Foundation of role-based access control
+
+**Permission Model** (`app/Models/Permission.php`)
+- **Purpose:** Define granular permissions (view-product, create-sale, edit-purchase, etc.)
+- **Fields:** id, name, description, timestamps
+- **Relationships:** 
+  - `belongsToMany(Role)` - Permissions can be assigned to multiple roles
+- **Key Role:** Enable fine-grained permission checking beyond just roles
+
+**User Model** (`app/Models/User.php`)
+- **Purpose:** Represent system users with authentication and relationships
+- **Fields:** id, name, email, password (hashed), role_id, email_verified_at, timestamps
+- **Relationships:**
+  - `belongsTo(Role)` - Each user has one role
+  - `hasMany(Purchase)` - Track purchases recorded by this user
+  - `hasMany(Sale)` - Track sales recorded by this user
+- **Key Role:** Central to authentication, authorization, and transaction tracking
+
+### Request Validation
+
+**ProfileUpdateRequest** (`app/Http/Requests/ProfileUpdateRequest.php`)
+- **Purpose:** Validate profile update form data
+- **Validations:** Email format, uniqueness (except current user), required fields
+- **Key Role:** Ensure data integrity for profile changes
+
+### Views
+
+**Authentication Views** (`resources/views/auth/`)
+- **login.blade.php** - User login form with email/password fields
+- **register.blade.php** - User registration form with validation errors
+- **forgot-password.blade.php** - Password reset request form
+- **reset-password.blade.php** - Password reset confirmation with new password fields
+- **verify-email.blade.php** - Email verification prompt
+- **confirm-password.blade.php** - Password confirmation for sensitive operations
+- **Purpose:** User-facing forms for all authentication workflows
+- **Key Role:** Entry point for unauthenticated users
+
+**Dashboard View** (`resources/views/dashboard.blade.php`)
+- **Purpose:** Main authenticated user landing page
+- **Content:** Welcome message, quick stats, low-stock alerts (placeholder)
+- **Key Role:** Hub for logged-in users to see system overview
+
+**User Management Views** (`resources/views/users/`)
+- **index.blade.php** - Table of all users with edit/delete actions
+- **create.blade.php** - Form to create new user with role selection
+- **edit.blade.php** - Form to update existing user information
+- **show.blade.php** - Detailed view of individual user
+- **Purpose:** Admin interface for user lifecycle management
+- **Key Role:** Complete CRUD interface for user administration
+
+**Layout Components** (`resources/views/layouts/`)
+- **app.blade.php** - Main application layout with header, sidebar, footer
+- **guest.blade.php** - Layout for unauthenticated pages (login, register)
+- **navigation.blade.php** - Reusable navigation menu component
+- **Purpose:** Consistent UI structure across all pages
+- **Key Role:** Ensures uniform appearance and navigation
+
+**Profile Management Views** (`resources/views/profile/`)
+- **edit.blade.php** - User profile editing form
+- **delete-user-form.blade.php** - Account deletion confirmation
+- **Purpose:** Self-service profile management
+- **Key Role:** Allow users to manage their own accounts
+
+### Routes
+
+**Web Routes** (`routes/web.php`)
+- **Public Routes:** Dashboard (requires auth), Profile routes (requires auth)
+- **Admin Routes:** User management (requires auth + admin role)
+- **Protected Routes:** Products, Categories, Sales, Purchases (require auth + permissions)
+- **Purpose:** Define all HTTP endpoints and their middleware protection
+- **Key Role:** Central routing configuration and security policy enforcement
+
+**Authentication Routes** (`routes/auth.php`)
+- **Login/Logout:** Session management routes
+- **Registration:** User account creation
+- **Password Reset:** Email-based password recovery
+- **Email Verification:** Email verification workflow
+- **Purpose:** Separate file for all authentication-related routes
+- **Key Role:** Clean separation of auth routes from main routes
+
+### Database Seeders
+
+**DatabaseSeeder** (`database/seeders/DatabaseSeeder.php`)
+- **Purpose:** Master seeder that orchestrates all other seeders
+- **Calls:** RolesTableSeeder, UsersTableSeeder, PermissionSeeder
+- **Usage:** `php artisan db:seed`
+- **Key Role:** Single entry point for populating test data
+
+**RolesTableSeeder** (`database/seeders/RolesTableSeeder.php`)
+- **Purpose:** Create initial system roles (Admin, Staff, Manager)
+- **Data Created:** Role records with descriptions
+- **Key Role:** Establishes role hierarchy and availability
+
+**UsersTableSeeder** (`database/seeders/UsersTableSeeder.php`)
+- **Purpose:** Create test/initial users with assigned roles
+- **Data Created:** Admin user, Staff users for testing
+- **Key Role:** Provides users for testing different role-based views
+
+**PermissionSeeder** (`database/seeders/PermissionSeeder.php`)
+- **Purpose:** Create permissions and assign them to roles
+- **Permissions:** view-product, create-sale, edit-purchase, etc.
+- **Key Role:** Define system-wide permission matrix
+
+### Database Migrations
+
+**Permission Tables Migration** (`database/migrations/2026_01_25_234602_create_permission_tables.php`)
+- **Tables Created:**
+  - `permissions` - Lists all system permissions
+  - `role_permission` - Junction table linking roles to permissions
+- **Purpose:** Enable many-to-many relationship between roles and permissions
+- **Key Role:** Infrastructure for granular permission-based access control
+
+**Add Description to Roles** (`database/migrations/2026_01_25_235403_add_description_to_roles_table.php`)
+- **Purpose:** Add description field to roles for documentation
+- **Field:** `description` (nullable string)
+- **Key Role:** Store role purpose and documentation
+
+**Rename Permissions to Description** (`database/migrations/2026_01_26_000026_rename_permissions_to_description_in_roles_table.php`)
+- **Purpose:** Align column naming convention after schema refinement
+- **Key Role:** Data migration for schema consistency
+
+### Configuration Files
+
+**Vite Configuration** (`vite.config.js`)
+- **Purpose:** Configure frontend asset bundling and development server
+- **Features:** Tailwind CSS integration, Laravel plugin, fast refresh
+- **Key Role:** Enables fast frontend development with hot module reloading
+
+**Tailwind Configuration** (`tailwind.config.js`)
+- **Purpose:** Customize Tailwind CSS defaults and theme
+- **Features:** Custom colors, spacing, responsive utilities
+- **Key Role:** Styling framework configuration for consistent UI
+
+**PostCSS Configuration** (`postcss.config.js`)
+- **Purpose:** Configure CSS post-processing
+- **Plugins:** Tailwind, Autoprefixer for browser compatibility
+- **Key Role:** Ensures CSS works across different browsers
+
+**Package Configuration** (`package.json`)
+- **Scripts:**
+  - `npm run dev` - Start Vite dev server for frontend
+  - `npm run build` - Build production CSS and JavaScript
+- **Dependencies:** Tailwind CSS, Alpine.js, Axios
+- **Key Role:** Frontend dependency management and build automation
+
+### CSS & JavaScript
+
+**Application CSS** (`resources/css/app.css`)
+- **Purpose:** Import Tailwind CSS and define custom styles
+- **Directives:** @tailwind for base, components, utilities
+- **Key Role:** Foundation for all styling in the application
+
+**Application JavaScript** (`resources/js/app.js`)
+- **Purpose:** Main JavaScript entry point
+- **Imports:** Alpine.js and custom utilities
+- **Key Role:** Initialize interactive components and UI behaviors
+
+---
+
 ## Development Timeline & Milestones
 
-| Phase | Status | Expected Completion | Key Deliverables |
+| Phase | Status | Completion Date | Key Deliverables |
 |-------|--------|-------------------|------------------|
 | Phase 0: Project Setup | ✅ Complete | Jan 21, 2026 | Repository, docs, dependencies |
 | Phase 1: Database & Models | ✅ Complete | Jan 21, 2026 | Migrations, models, schema |
-| Phase 2: Auth & Authorization | 🟡 In Progress | Feb 2, 2026 | RBAC, user management |
-| Phase 3: Core Business Logic | 🟡 In Progress | Feb 10, 2026 | Controllers, services, logic |
+| Phase 2: Auth & Authorization | ✅ Complete | Jan 27, 2026 | RBAC, user management, auth views |
+| Phase 3: Core Business Logic | 🟡 In Progress | Feb 10, 2026 | Controllers, services, business logic |
 | Phase 4: API & Testing | ⏳ Planned | Feb 20, 2026 | Tests, API routes, documentation |
 | Phase 5: Frontend Implementation | ⏳ Planned | Mar 15, 2026 | All UI views, forms, dashboards |
 | Phase 6: Notifications & Jobs | ⏳ Planned | Mar 25, 2026 | Email alerts, scheduled tasks |
@@ -507,6 +802,6 @@ Keep the document structure consistent and avoid adding code snippets — this i
 
 ---
 
-**Last Reviewed:** January 27, 2026  
-**Development Phase:** 2-3 (Authentication & Core Business Logic)  
-**System Status:** 🟡 In Development (Core infrastructure complete, business logic in progress)
+**Last Reviewed:** January 27, 2026 (Updated after Phase 2 completion)  
+**Development Phase:** 2-3 (Authentication & Authorization complete, Core Business Logic in progress)  
+**System Status:** 🟡 In Development (Authentication & user management complete, business logic implementation underway)

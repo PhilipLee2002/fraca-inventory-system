@@ -9,8 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('roles', function (Blueprint $table) {
-            // Rename the column
-            $table->renameColumn('permissions', 'description');
+            // Rename the column only if it exists and the target doesn't
+            if (Schema::hasColumn('roles', 'permissions') && !Schema::hasColumn('roles', 'description')) {
+                $table->renameColumn('permissions', 'description');
+            }
         });
     }
 

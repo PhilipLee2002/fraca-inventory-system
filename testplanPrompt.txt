@@ -1,0 +1,38 @@
+You are my coding assistant. 
+Before generating any document or test artifacts, first analyze the entire project structure (routes, controllers, models, services, migrations, middleware, policies, and database schema). Summarize your understanding of the system architecture and current implementation state. Confirm alignment with the SRS and current development stage before generating the Software Test Plan contents.
+Produce a complete, practical Software Test Plan and the associated test artifacts for the FRACA SERVCOM Inventory Management System (Laravel, backend-first). Follow the uploaded TEST_PLAN GUIDE structure and the SRS. Work through these concrete steps and create files in the repository (or return file contents if repo not provided).
+
+Project summary (use exactly):
+- Tech: PHP (Laravel 10+), MySQL/MariaDB, Docker for environments, GitHub Actions for CI.
+- Modules: Authentication (Admin/Staff), Role-based access control, Products (CRUD, barcode, stock_threshold), Categories, Sales, Purchases, Automatic stock updates, Stock history, Low-stock alerting (email/DB), Reporting (sales/purchases/inventory), Dashboard analytics, Cron jobs.
+
+Primary deliverables (create these files under the project root unless told otherwise):
+1. `/docs/test-plan.md` — full Test Plan (academic + practical) matching TEST_PLAN GUIDE structure: scope, objectives, constraints, test strategy (unit/integration/e2e/system), test schedule, resources, metrics, pass/fail criteria, tools, environments, test data policy, defect process, traceability approach, sample test cases, and appendices (defect template, test case template).
+2. `/docs/test-cases.csv` — detailed tests: columns `TestID, Title, Module, Type, Preconditions, Steps, ExpectedResult, Severity, Priority, Automated(Y/N), ScriptPath`.
+3. `/tests/unit/StockServiceTest.php`, `/tests/unit/SaleServiceTest.php`, `/tests/unit/PurchaseServiceTest.php` — PHPUnit skeletons with at least 6 example test methods (happy path + edge cases) showing structure, comments, and TODOs for assertions. Use Laravel testing conventions and database transaction rollbacks.
+4. `/postman/FRACA-SERVCOM-API.postman_collection.json` — Postman collection with example requests for `POST /api/login`, `POST /api/products`, `POST /api/sales`, `POST /api/purchases`, `GET /api/reports/sales`. Include environment variables for `base_url`, `admin_token`, `staff_token`.
+5. `/docs/traceability.csv` — map SRS requirement IDs -> TestIDs from test-cases.csv.
+6. `/ci/github-actions/test-and-newman.yml` — GitHub Actions workflow to run `composer test` (PHPUnit) and Newman for the Postman collection on PRs and pushes to main.
+7. `/docs/run-tests.md` — step-by-step instructions to run tests locally and in CI, plus how to seed test data.
+
+Quality rules & assumptions:
+- Aim for clear, copy-paste-ready PHP test code using Laravel's testing helpers (without running anything).
+- Use database transactions in tests and recommend using sqlite in-memory for speed in CI where appropriate.
+- If fixture names, table columns, or API routes differ from assumptions, leave TODO comments and include a small section listing the assumptions you made (e.g., `products` table columns: id, product_name, barcode, stock, stock_threshold, price).
+- Create test IDs prefixed `TC-` (functional) `UT-` (unit) `IT-` (integration) `NF-` (non-functional).
+
+Acceptance criteria for this task:
+- I can open the repo and see the files above.
+- The Test Plan is formatted in markdown, ready for stakeholder review.
+- PHPUnit tests are syntactically valid skeletons and include clear assertions to implement.
+- Postman collection can be imported and used to run acceptance tests by filling environment variables.
+- CI workflow is valid YAML for GitHub Actions and references the file paths above.
+
+If you need to ask clarifying questions, ask only these:
+- repo_url (or indicate if I should return files here)
+- the exact API route prefixes (if different than `/api`)
+- preferred CI runner (GitHub Actions / GitLab / Jenkins)
+
+If you don't get those, proceed with the assumptions above and clearly document them at `/docs/assumptions.md`.
+
+Start by creating `/docs/test-plan.md` and `/docs/test-cases.csv` and then produce the PHPUnit skeletons and Postman collection.

@@ -1,0 +1,44 @@
+RequirementID,Requirement Description,TestID,TestTitle,TestType,Status
+REQ-AUTH-001,User authentication with valid credentials,IT-001,User login returns valid token,Integration,Automated
+REQ-AUTH-002,Reject login with invalid credentials,IT-002,Invalid credentials return 401,Integration,Automated
+REQ-AUTH-003,Session/token management (logout),TC-005,Logout invalidates token,Functional,Automated
+REQ-PROD-001,Create product with unique SKU,IT-006,Create product with duplicate SKU rejected,Integration,Automated
+REQ-PROD-002,Create product with unique barcode,UT-003,Product barcode uniqueness validation,Unit,Automated
+REQ-PROD-003,Product CRUD operations,IT-005,Create product with valid data,Integration,Automated
+REQ-PROD-004,Get product details including category and supplier,IT-007,Get product by ID,Integration,Automated
+REQ-PROD-005,Update product information,IT-008,Update product details,Integration,Automated
+REQ-PROD-006,Delete product (soft delete),IT-009,Delete product (soft delete),Integration,Automated
+REQ-PROD-007,List products with pagination,TC-006,Pagination works on product list,Functional,Automated
+REQ-PROD-008,Filter products by category,TC-007,Search/filter products by category,Functional,Automated
+REQ-STOCK-001,Automatic stock increment on purchase, UT-004,Stock calculation after purchase,Unit,Automated
+REQ-STOCK-002,Automatic stock decrement on sale,UT-005,Stock calculation after sale (sufficient stock),Unit,Automated
+REQ-STOCK-003,Prevent overselling (stock validation),UT-006,Stock calculation prevents overselling,Unit,Automated
+REQ-STOCK-004,Manual stock adjustment with audit trail,UT-007,Manual stock adjustment logging,Unit,Automated
+REQ-STOCK-005,Stock history complete audit trail,IT-014,Generate sales report,Integration,Automated
+REQ-STOCK-006,Low-stock alert generation,UT-008,Low-stock alert generation,Unit,Automated
+REQ-PURCHASE-001,Create purchase order with line items,IT-010,Create purchase order,Integration,Automated
+REQ-PURCHASE-002,Calculate purchase total automatically,UT-010,Purchase order total calculation,Unit,Automated
+REQ-PURCHASE-003,Track stock increments from purchases,UT-004,Stock calculation after purchase,Unit,Automated
+REQ-SALE-001,Create sale/invoice with line items,IT-011,Create sale transaction,Integration,Automated
+REQ-SALE-002,Validate sufficient stock before sale,IT-012,Sale validation prevents overselling,Integration,Automated
+REQ-SALE-003,Decrement stock on completed sale,UT-005,Stock calculation after sale (sufficient stock),Unit,Automated
+REQ-SALE-004,Generate invoice number automatically,TC-008,Barcode scanner integration (simulated),Functional,Automated
+REQ-RBAC-001,Role-based access control (Admin vs Staff),TC-001,User role-based access (Admin vs Staff),Functional,Automated
+REQ-AUTH-PERM-001,Permission-based authorization checks,IT-004,Unauthenticated request rejected,Integration,Automated
+REQ-REPORT-001,Sales report with date range filtering,IT-014,Generate sales report,Integration,Automated
+REQ-REPORT-002,Purchase report by supplier,IT-015,Generate purchase report,Integration,Automated
+REQ-REPORT-003,Stock levels report with below-threshold flag,IT-016,Stock levels report,Integration,Automated
+REQ-REPORT-004,Inventory valuation report (cost * qty),IT-017,Inventory valuation report,Integration,Automated
+REQ-NOTIF-001,Low-stock email alerts (Phase 6),TC-003,Low-stock alert notification,Functional,Manual
+REQ-DATA-001,Database transaction atomicity on purchase/sale,NF-002,Stock update transaction atomicity,Non-Functional,Automated
+REQ-PERF-001,API response time < 500ms,NF-001,API response time < 500ms under normal load,Non-Functional,Automated
+REQ-PERF-002,SQL query optimization (N+1 prevention),NF-004,SQL query optimization (N+1 prevention),Non-Functional,Automated
+REQ-SECURITY-001,SQL injection prevention,NF-005,Security: SQL injection prevention,Non-Functional,Automated
+REQ-SECURITY-002,Unauthorized access prevention,NF-006,Security: Unauthorized access prevention,Non-Functional,Automated
+REQ-SECURITY-003,CSRF token validation,NF-007,Security: CSRF token validation,Non-Functional,Automated
+REQ-SECURITY-004,Password hashing (bcrypt),NF-008,Data encryption at rest (optional),Non-Functional,Manual
+REQ-AUDIT-001,Audit logging for sensitive operations,NF-009,Audit logging for sensitive operations,Non-Functional,Automated
+REQ-DATA-MAINT-001,Soft delete support for data retention,NF-010,Data retention policy (soft deletes),Non-Functional,Automated
+REQ-SYSTEM-001,System initialization and migrations,ST-001,System boots and migrations run without error,System-Level,Automated
+REQ-SYSTEM-002,Test data seeding,ST-002,Seeders populate test data correctly,System-Level,Automated
+REQ-SYSTEM-003,API documentation accuracy,ST-003,API documentation accuracy,System-Level,Manual
