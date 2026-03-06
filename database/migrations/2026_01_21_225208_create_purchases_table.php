@@ -15,9 +15,18 @@ return new class extends Migration
         $table->id();
         $table->foreignId('supplier_id')->constrained();
         $table->foreignId('user_id')->constrained(); // Who made the purchase
-        $table->string('purchase_number')->unique();
+        $table->string('purchase_number')->unique()->nullable();
+        $table->date('purchase_date')->nullable();
+        $table->date('delivery_date')->nullable();
+        $table->string('reference_number')->nullable();
+        $table->string('invoice_number')->nullable();
         $table->decimal('total_amount', 10, 2);
-        $table->string('status')->default('pending'); // pending, completed, cancelled
+        $table->decimal('shipping_cost', 10, 2)->default(0);
+        $table->decimal('tax_amount', 10, 2)->default(0);
+        $table->decimal('discount_amount', 10, 2)->default(0);
+        $table->string('payment_method')->nullable();
+        $table->string('status')->default('pending'); // pending, received, cancelled
+        $table->foreignId('created_by')->nullable()->constrained('users');
         $table->text('notes')->nullable();
         $table->timestamps();
     });

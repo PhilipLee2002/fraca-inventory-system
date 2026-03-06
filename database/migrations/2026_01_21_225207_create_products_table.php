@@ -16,15 +16,20 @@ return new class extends Migration
         $table->string('name');
         $table->text('description')->nullable();
         $table->string('sku')->unique(); // Stock Keeping Unit
-        $table->string('barcode')->unique(); // ← UNIQUE CONSTRAINT
+        $table->string('barcode')->unique()->nullable(); // Optional barcode for future scanner support
         $table->foreignId('category_id')->constrained();
         $table->foreignId('supplier_id')->constrained();
         $table->decimal('cost_price', 10, 2); // What you paid
         $table->decimal('selling_price', 10, 2); // What you sell for
-        $table->integer('quantity')->default(0);
+        $table->integer('quantity')->default(0); // Legacy field
+        $table->integer('current_stock')->default(0); // Current stock quantity
+        $table->integer('initial_stock')->nullable(); // Initial stock when added
         $table->integer('reorder_level')->default(10); // Alert when stock ≤ this
-        $table->string('unit'); // pieces, kg, liters, etc.
+        $table->integer('minimum_stock')->nullable(); // Minimum stock to maintain
+        $table->string('unit')->nullable(); // Legacy field
+        $table->string('unit_of_measurement')->nullable(); // Unit of measurement
         $table->string('image')->nullable();
+        $table->boolean('is_active')->default(true);
         $table->timestamps();
         
         // Add indexes for faster searching

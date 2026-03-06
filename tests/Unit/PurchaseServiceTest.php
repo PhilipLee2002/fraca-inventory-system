@@ -103,7 +103,7 @@ class PurchaseServiceTest extends TestCase
 
         // ACT
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-2026-001',
+            'purchase_number' => 'PO-2026-001',
             'supplier_id' => $supplier->id,
             'user_id' => $userId,
             'total_amount' => 500.00,
@@ -135,12 +135,14 @@ class PurchaseServiceTest extends TestCase
 
         // ACT
         $purchase1 = Purchase::create([
+            'purchase_number' => 'PO-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 100,
             'payment_method' => 'cash'
         ]);
         $purchase2 = Purchase::create([
+            'purchase_number' => 'PO-002',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 200,
@@ -148,8 +150,8 @@ class PurchaseServiceTest extends TestCase
         ]);
 
         // ASSERT
-        $this->assertNotNull($purchase1->purchase_order_number);
-        $this->assertNotNull($purchase2->purchase_order_number);
+        $this->assertNotNull($purchase1->purchase_number);
+        $this->assertNotNull($purchase2->purchase_number);
     }
 
     /**
@@ -168,7 +170,7 @@ class PurchaseServiceTest extends TestCase
         // ARRANGE & ACT
         $supplier = Supplier::factory()->create();
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-001',
+            'purchase_number' => 'PO-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 500,
@@ -210,7 +212,7 @@ class PurchaseServiceTest extends TestCase
 
         // ACT
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-BULK-001',
+            'purchase_number' => 'PO-BULK-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 650,
@@ -250,7 +252,7 @@ class PurchaseServiceTest extends TestCase
 
         // ACT & ASSERT
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-001',
+            'purchase_number' => 'PO-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 500,
@@ -304,7 +306,7 @@ class PurchaseServiceTest extends TestCase
 
         // ACT
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-TEST-001',
+            'purchase_number' => 'PO-TEST-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 5000,

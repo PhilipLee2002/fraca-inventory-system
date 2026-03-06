@@ -28,7 +28,9 @@ class Purchase extends Model
 
     protected $fillable = [
         'supplier_id', 'user_id', 'purchase_number', 'total_amount',
-        'notes', 'status', 'purchase_date',
+        'notes', 'status', 'purchase_date', 'delivery_date', 'reference_number',
+        'invoice_number', 'shipping_cost', 'tax_amount', 'discount_amount',
+        'payment_method', 'created_by',
     ];
     public function supplier()
 {
@@ -41,6 +43,11 @@ public function user()
 }
 
 public function items()
+{
+    return $this->hasMany(PurchaseItem::class);
+}
+
+public function purchaseItems()
 {
     return $this->hasMany(PurchaseItem::class);
 }

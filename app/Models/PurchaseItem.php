@@ -25,6 +25,7 @@ class PurchaseItem extends Model
 
     protected $fillable = [
         'purchase_id', 'product_id', 'quantity', 'unit_price', 'total',
+        'tax_rate', 'discount',
     ];
     public function purchase()
 {

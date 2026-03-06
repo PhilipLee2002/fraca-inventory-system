@@ -24,7 +24,7 @@ class ProductFactory extends Factory
         return [
             'name' => $this->faker->word(),
             'sku' => $this->faker->unique()->ean8(),
-            'barcode' => $this->faker->unique()->ean13(),
+            'barcode' => $this->faker->optional(0.7)->ean13(), // 70% chance of having a barcode
             'description' => $this->faker->sentence(),
             'category_id' => Category::factory(),
             'supplier_id' => Supplier::factory(),

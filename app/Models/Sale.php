@@ -29,7 +29,9 @@ class Sale extends Model
 
     protected $fillable = [
         'customer_id', 'user_id', 'invoice_number', 'total_amount',
-        'payment_method', 'notes', 'status', 'sale_date',
+        'payment_method', 'notes', 'status', 'sale_date', 'due_date',
+        'reference_number', 'shipping_cost', 'tax_amount', 'discount_amount',
+        'payment_status', 'created_by',
     ];
     public function customer()
 {
@@ -42,6 +44,11 @@ public function user()
 }
 
 public function items()
+{
+    return $this->hasMany(SaleItem::class);
+}
+
+public function saleItems()
 {
     return $this->hasMany(SaleItem::class);
 }

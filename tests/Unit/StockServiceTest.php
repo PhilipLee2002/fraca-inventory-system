@@ -131,12 +131,12 @@ class StockServiceTest extends TestCase
         // ARRANGE
         $product = Product::factory()->create([
             'current_stock' => 2,
-            'stock_threshold' => 5
+            'reorder_level' => 5
         ]);
 
         // ACT & ASSERT
-        $this->assertLessThanOrEqual($product->stock_threshold, $product->current_stock);
-        $this->assertTrue($product->current_stock < $product->stock_threshold);
+        $this->assertLessThanOrEqual($product->reorder_level, $product->current_stock);
+        $this->assertTrue($product->current_stock < $product->reorder_level);
     }
 
     /**
@@ -152,7 +152,7 @@ class StockServiceTest extends TestCase
         // ARRANGE
         $product = Product::factory()->create([
             'current_stock' => 10,
-            'stock_threshold' => 5
+            'reorder_level' => 5
         ]);
 
         // ACT & ASSERT

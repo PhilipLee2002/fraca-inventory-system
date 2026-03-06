@@ -91,7 +91,7 @@ class SaleServiceTest extends TestCase
         $saleQuantity = 5;
 
         // ACT
-        $sale = Sale::create(['customer_id' => $customer->id, 'user_id' => $this->user->id, 'total_amount' => 150]);
+        $sale = Sale::create(['customer_id' => $customer->id, 'user_id' => $this->user->id, 'total_amount' => 150, 'payment_method' => 'cash']);
         SaleItem::create(['sale_id' => $sale->id, 'product_id' => $product->id, 'quantity' => 5, 'unit_price' => 30]);
         $product->decrement('current_stock', 5);
 
