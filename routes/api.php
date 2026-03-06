@@ -1,12 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\ReportController;
 
 /*
@@ -35,9 +36,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('customers', CustomerController::class);
     Route::apiResource('purchases', PurchaseController::class)->except(['update', 'destroy']);
     Route::apiResource('sales', SaleController::class)->except(['update', 'destroy']);
+    
+    // Stock adjustments
+    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store']);
+    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index']);
 
     // Reports
     Route::prefix('reports')->group(function () {
+        Route::get('/dashboard', [ReportController::class, 'dashboard']);
         Route::get('/sales', [ReportController::class, 'sales']);
         Route::get('/purchases', [ReportController::class, 'purchases']);
         Route::get('/stock-levels', [ReportController::class, 'stockLevels']);
