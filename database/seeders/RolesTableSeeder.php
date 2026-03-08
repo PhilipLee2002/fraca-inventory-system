@@ -13,26 +13,31 @@ class RolesTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear existing roles
-        //Role::truncate();
-
         $roles = [
             [
                 'name' => 'admin', 
-                'permissions' => 'Administrator with full access' // Use 'permissions' column
+                'description' => 'Administrator with full access'
             ],
             [
                 'name' => 'manager', 
-                'permissions' => 'Manager with limited administrative access'
+                'description' => 'Manager with limited administrative access'
             ],
             [
                 'name' => 'staff', 
-                'permissions' => 'Staff with basic access'
+                'description' => 'Staff with basic access'
             ],
         ];
 
-        foreach ($roles as $role) {
-            Role::create($role);
+        foreach ($roles as $roleData) {
+            // Check if role already exists
+            $existingRole = Role::where('name', $roleData['name'])->first();
+            
+            if (!$existingRole) {
+                Role::create($roleData);
+                echo "Created role: {$roleData['name']}\n";
+            } else {
+                echo "Role already exists: {$roleData['name']}\n";
+            }
         }
         
         echo "Roles seeded successfully!\n";

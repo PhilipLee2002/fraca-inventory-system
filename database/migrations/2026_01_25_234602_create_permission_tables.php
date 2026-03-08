@@ -22,11 +22,11 @@ return new class extends Migration
         // Create role_permission pivot table
         Schema::create('role_permission', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
-            $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');
+            $table->foreignId('role_id')->constrained()->onDelete('cascade');
+            $table->foreignId('permission_id')->constrained()->onDelete('cascade');
             $table->timestamps();
             
-            // Ensure unique combination of role_id and permission_id
+            // Ensure unique role-permission combinations
             $table->unique(['role_id', 'permission_id']);
         });
     }

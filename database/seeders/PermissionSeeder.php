@@ -65,10 +65,15 @@ class PermissionSeeder extends Seeder
 
         // Create permissions in database
         foreach ($permissions as $permissionName) {
-            Permission::create([
-                'name' => $permissionName,
-                'description' => $this->getPermissionDescription($permissionName)
-            ]);
+            // Check if permission already exists
+            $existingPermission = Permission::where('name', $permissionName)->first();
+            
+            if (!$existingPermission) {
+                Permission::create([
+                    'name' => $permissionName,
+                    'description' => $this->getPermissionDescription($permissionName)
+                ]);
+            }
         }
 
         // Assign permissions to roles
