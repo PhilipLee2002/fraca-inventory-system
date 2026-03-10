@@ -32,6 +32,18 @@ class Purchase extends Model
         'invoice_number', 'shipping_cost', 'tax_amount', 'discount_amount',
         'payment_method', 'created_by',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($purchase) {
+            if (empty($purchase->purchase_number)) {
+                $purchase->purchase_number = 'PO-' . date('Y') . '-' . str_pad(static::max('id') + 1, 3, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function supplier()
 {
     return $this->belongsTo(Supplier::class);

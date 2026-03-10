@@ -90,7 +90,7 @@ class PurchaseServiceTest extends TestCase
      * Test: Purchase model creation
      *
      * Verifies that a Purchase record can be created with required fields:
-     * supplier_id, user_id, purchase_order_number, total_amount, status, payment_method
+     * supplier_id, user_id, purchase_number, total_amount, status, payment_method
      *
      * @test
      * @return void
@@ -103,7 +103,7 @@ class PurchaseServiceTest extends TestCase
 
         // ACT
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-2026-001',
+            'purchase_number' => 'PO-2026-001',
             'supplier_id' => $supplier->id,
             'user_id' => $userId,
             'total_amount' => 500.00,
@@ -148,8 +148,8 @@ class PurchaseServiceTest extends TestCase
         ]);
 
         // ASSERT
-        $this->assertNotNull($purchase1->purchase_order_number);
-        $this->assertNotNull($purchase2->purchase_order_number);
+        $this->assertNotNull($purchase1->purchase_number);
+        $this->assertNotNull($purchase2->purchase_number);
     }
 
     /**
@@ -168,7 +168,7 @@ class PurchaseServiceTest extends TestCase
         // ARRANGE & ACT
         $supplier = Supplier::factory()->create();
         $purchase = Purchase::create([
-            'purchase_order_number' => 'PO-001',
+            'purchase_number' => 'PO-001',
             'supplier_id' => $supplier->id,
             'user_id' => $this->user->id,
             'total_amount' => 500,
