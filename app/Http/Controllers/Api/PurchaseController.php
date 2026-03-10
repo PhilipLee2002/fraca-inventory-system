@@ -57,25 +57,32 @@ class PurchaseController extends BaseController
         try {
             DB::beginTransaction();
 
-            // Calculate total amount (simple: no tax/discount/shipping)
+            // Get input data using input() method
+            $items = $request->input('items');
+            $supplierId = $request->input('supplier_id');
+            $purchaseDate = $request->input('purchase_date');
+            $notes = $request->input('notes');
+            $status = $request->input('status', 'pending');
+
+            // Calculate total amount
             $totalAmount = 0;
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $totalAmount += $item['quantity'] * $item['unit_price'];
             }
 
             // Create purchase
             $purchase = Purchase::create([
-                'supplier_id' => $request->supplier_id,
+                'supplier_id' => $supplierId,
                 'user_id' => auth()->id(),
                 'purchase_number' => 'PUR-' . date('YmdHis'),
-                'purchase_date' => $request->purchase_date,
+                'purchase_date' => $purchaseDate,
                 'total_amount' => $totalAmount,
-                'notes' => $request->notes,
-                'status' => $request->status ?? 'pending',
+                'notes' => $notes,
+                'status' => $status,
             ]);
 
             // Create purchase items and update stock
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $itemTotal = $item['quantity'] * $item['unit_price'];
                 
                 PurchaseItem::create([
@@ -160,7 +167,7 @@ class PurchaseController extends BaseController
                         'type' => 'adjustment',
                         'reference_type' => Purchase::class,
                         'reference_id' => $purchase->id,
-                        'notes' => "Purchase cancelled: {$purchase->reference_number}",
+                        'notes' => "Purchase cancelled: {$purchase->purchase_number}",
                         'created_by' => auth()->id(),
                     ]);
                 }
@@ -181,3 +188,4 @@ class PurchaseController extends BaseController
         }
     }
 }
+

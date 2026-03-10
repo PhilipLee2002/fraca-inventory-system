@@ -57,8 +57,16 @@ class SaleController extends BaseController
         try {
             DB::beginTransaction();
 
+            // Get input data using input() method
+            $items = $request->input('items');
+            $customerId = $request->input('customer_id');
+            $saleDate = $request->input('sale_date');
+            $paymentMethod = $request->input('payment_method');
+            $notes = $request->input('notes');
+            $status = $request->input('status', 'pending');
+
             // VALIDATION: Check stock FIRST
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
                 if (!$product || $product->current_stock < $item['quantity']) {
                     throw new \Exception(
@@ -67,26 +75,26 @@ class SaleController extends BaseController
                 }
             }
 
-            // Calculate total amount (simple: no tax/discount/shipping)
+            // Calculate total amount
             $totalAmount = 0;
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $totalAmount += $item['quantity'] * $item['unit_price'];
             }
 
             // Create sale
             $sale = Sale::create([
-                'customer_id' => $request->customer_id,
+                'customer_id' => $customerId,
                 'user_id' => auth()->id(),
                 'invoice_number' => 'INV-' . date('YmdHis'),
-                'sale_date' => $request->sale_date,
+                'sale_date' => $saleDate,
                 'total_amount' => $totalAmount,
-                'payment_method' => $request->payment_method,
-                'status' => $request->status ?? 'pending',
-                'notes' => $request->notes,
+                'payment_method' => $paymentMethod,
+                'status' => $status,
+                'notes' => $notes,
             ]);
 
             // Create sale items and update stock
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $itemTotal = $item['quantity'] * $item['unit_price'];
                 
                 SaleItem::create([
@@ -172,7 +180,7 @@ class SaleController extends BaseController
                         'type' => 'adjustment',
                         'reference_type' => Sale::class,
                         'reference_id' => $sale->id,
-                        'notes' => "Sale cancelled: {$sale->reference_number}",
+                        'notes' => "Sale cancelled: {$sale->invoice_number}",
                         'created_by' => auth()->id(),
                     ]);
                 }
@@ -193,3 +201,4 @@ class SaleController extends BaseController
         }
     }
 }
+
