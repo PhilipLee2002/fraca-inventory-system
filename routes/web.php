@@ -29,8 +29,13 @@ Route::middleware('auth')->group(function () {
 
 // User Management Routes - Protected by role and permissions
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::resource('users', UserController::class)->except(['show']);
-    Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('users', [UserController::class, 'index'])->name('users.index')->middleware('permission:view-user');
+    Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:create-user');
+    Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:create-user');
+    Route::get('users/{user}', [UserController::class, 'show'])->name('users.show')->middleware('permission:view-user');
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:edit-user');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:edit-user');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:delete-user');
 });
 
 // Example protected routes for other modules
