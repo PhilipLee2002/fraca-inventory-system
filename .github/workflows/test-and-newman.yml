@@ -8,7 +8,7 @@ on:
 
 env:
   DB_CONNECTION: sqlite
-  DB_DATABASE: :memory:
+  DB_DATABASE: ":memory:"
   APP_ENV: testing
   APP_DEBUG: true
 
