@@ -28,7 +28,7 @@ class AuthController extends BaseController
             $user = User::where('email', $request->email)->firstOrFail();
             
             // Check if user is active
-            if (!$user->is_active) {
+            if (isset($user->status) && $user->status === 'inactive') {
                 return $this->sendError('Account is deactivated', [], 403);
             }
 
@@ -45,7 +45,6 @@ class AuthController extends BaseController
                     'email' => $user->email,
                     'role' => $user->role,
                 ],
-                'permissions' => $user->getAllPermissions()->pluck('name'),
             ], 'Login successful');
 
         } catch (\Exception $e) {
@@ -59,7 +58,10 @@ class AuthController extends BaseController
     public function logout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $token = $request->user()->currentAccessToken();
+            if ($token) {
+                $token->delete();
+            }
 
             return $this->sendSuccess(null, 'Logged out successfully');
 
@@ -69,16 +71,51 @@ class AuthController extends BaseController
     }
 
     /**
-     * Get authenticated user.
+     * Verify admin credentials (used by Manager for sensitive operations).
      */
-    public function user(Request $request)
+    public function verifyAdmin(Request $request)
     {
         try {
-            $user = $request->user()->load('permissions');
+            $request->validate([
+                'email'    => 'required|email',
+                'password' => 'required',
+            ]);
+
+            $admin = User::where('email', $request->email)->first();
+
+            if (!$admin || !$admin->isAdmin()) {
+                return $this->sendError('Invalid admin credentials.', [], 401);
+            }
+
+            if (!\Illuminate\Support\Facades\Hash::check($request->password, $admin->password)) {
+                return $this->sendError('Invalid admin credentials.', [], 401);
+            }
+
+            // Log the verification attempt
+            \Illuminate\Support\Facades\Log::info('Admin verification', [
+                'admin_email'  => $request->email,
+                'manager_id'   => auth()->id(),
+                'ip'           => $request->ip(),
+                'success'      => true,
+            ]);
+
+            return $this->sendSuccess(['verified' => true], 'Admin verified successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Verification failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get current authenticated user.
+     */
+    public function me(Request $request)
+    {
+        try {
+            $user = $request->user()->load('role');
 
             return $this->sendSuccess([
                 'user' => $user,
-                'permissions' => $user->getAllPermissions()->pluck('name'),
             ], 'User retrieved successfully');
 
         } catch (\Exception $e) {

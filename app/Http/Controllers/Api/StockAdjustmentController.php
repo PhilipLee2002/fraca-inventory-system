@@ -11,54 +11,42 @@ use Illuminate\Support\Facades\DB;
 class StockAdjustmentController extends BaseController
 {
     /**
-     * Store a newly created stock adjustment.
+     * Store a stock adjustment.
+     * Accepts: { product_id, quantity_change (signed int), reason }
      */
     public function store(StockAdjustmentRequest $request)
     {
         try {
             DB::beginTransaction();
 
-            $product = Product::findOrFail($request->product_id);
+            $product        = Product::findOrFail($request->product_id);
+            $quantityChange = (int) $request->quantity_change;
+            $oldStock       = $product->current_stock;
+            $newStock       = $oldStock + $quantityChange;
 
-            // Calculate new quantity based on adjustment type
-            $quantityChange = $request->quantity;
-            
-            if ($request->adjustment_type === 'subtraction') {
-                $quantityChange = -$quantityChange;
-            } elseif ($request->adjustment_type === 'correction') {
-                // For correction, we set stock to specific quantity
-                $quantityChange = $request->quantity - $product->stock_quantity;
-            }
+            // Update stock
+            $product->update(['current_stock' => $newStock]);
 
-            // Update product stock
-            $product->increment('stock_quantity', $quantityChange);
-
-            // Create stock history record
-            $stockHistory = StockHistory::create([
-                'product_id' => $product->id,
-                'quantity' => $quantityChange,
-                'type' => 'adjustment',
-                'adjustment_type' => $request->adjustment_type,
-                'reason' => $request->reason,
-                'reference' => $request->reference,
-                'notes' => $request->notes,
-                'created_by' => auth()->id(),
+            // Log to stock_histories
+            $history = StockHistory::create([
+                'product_id'        => $product->id,
+                'transaction_type'  => 'adjustment',
+                'quantity_change'   => $quantityChange,
+                'previous_quantity' => $oldStock,
+                'new_quantity'      => $newStock,
+                'notes'             => $request->reason,
             ]);
-
-            // Record old and new stock quantities
-            $stockHistory->metadata = [
-                'old_stock' => $product->stock_quantity - $quantityChange,
-                'new_stock' => $product->stock_quantity,
-                'adjustment_type' => $request->adjustment_type,
-            ];
-            $stockHistory->save();
 
             DB::commit();
 
+            $product->load('category', 'supplier');
+
             return $this->sendCreated([
-                'product' => $product,
-                'adjustment' => $stockHistory,
+                'product'         => $product,
+                'history'         => $history,
                 'quantity_change' => $quantityChange,
+                'old_stock'       => $oldStock,
+                'new_stock'       => $newStock,
             ], 'Stock adjusted successfully');
 
         } catch (\Exception $e) {
@@ -68,34 +56,27 @@ class StockAdjustmentController extends BaseController
     }
 
     /**
-     * Get stock adjustment history.
+     * List stock adjustment history (transaction_type = adjustment).
      */
     public function index(Request $request)
     {
         try {
-            $query = StockHistory::with(['product', 'createdBy'])
-                ->where('type', 'adjustment');
+            $query = StockHistory::with('product:id,name,sku')
+                ->where('transaction_type', 'adjustment');
 
-            // Apply filters
-            if ($request->has('product_id')) {
+            if ($request->filled('product_id')) {
                 $query->where('product_id', $request->product_id);
             }
 
-            if ($request->has('adjustment_type')) {
-                $query->where('adjustment_type', $request->adjustment_type);
+            if ($request->filled('start_date')) {
+                $query->where('created_at', '>=', $request->start_date . ' 00:00:00');
             }
 
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $query->whereBetween('created_at', [
-                    $request->start_date,
-                    $request->end_date
-                ]);
+            if ($request->filled('end_date')) {
+                $query->where('created_at', '<=', $request->end_date . ' 23:59:59');
             }
 
-            // Apply sorting
-            $query->orderBy('created_at', 'desc');
-
-            $adjustments = $query->paginate($request->get('per_page', 20));
+            $adjustments = $query->latest()->paginate($request->get('per_page', 20));
 
             return $this->sendPaginated($adjustments, 'Stock adjustments retrieved successfully');
 

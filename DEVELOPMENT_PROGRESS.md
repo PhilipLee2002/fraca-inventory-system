@@ -3,8 +3,8 @@
 **Project Name:** FRACA SERVCOM Inventory Management System  
 **Client:** FRACA SERVCOM (furniture & hardware supplies)  
 **Repository:** https://github.com/PhilipLee2002/fraca-inventory-system  
-**Tech Stack:** Laravel 12, MySQL, Tailwind CSS, Alpine.js  
-**Last Updated:** February 1, 2026
+**Tech Stack:** Laravel 12, MySQL, Blade, Bootstrap 5, HTML5/CSS3, Vanilla JavaScript (Axios), Vite  
+**Last Updated:** March 15, 2026
 
 ---
 
@@ -22,7 +22,7 @@ This is a web-based inventory management system designed to help FRACA SERVCOM a
 
 ---
 
-## Current Development Status: Phase 1 → Phase 3 (In Progress)
+## Current Development Status: Phase 5 Complete ✅
 
 ### ✅ Completed: Phase 0 — Project Setup & Planning
 
@@ -436,25 +436,28 @@ php artisan optimize:clear
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Stock Reports** | 🟡 In Progress | ReportController needed |
-| **Sales Reports** | 🟡 In Progress | Query logic needed |
-| **Purchase Reports** | 🟡 In Progress | Query logic needed |
-| **CSV Export** | 🟡 In Progress | league/csv installed, integration needed |
+| **Stock Reports** | ✅ Implemented | Inventory valuation + stock movement reports |
+| **Sales Reports** | ✅ Implemented | Sales by period with date/customer/category filters |
+| **Purchase Reports** | ✅ Implemented | Purchase history via API |
+| **Profit/Loss Report** | ✅ Implemented | ReportController::profitLoss() added |
+| **CSV Export** | ✅ Implemented | exportToCSV() utility, browser download |
 | **PDF Export** | 🟡 In Progress | barryvdh/laravel-dompdf installed, views needed |
-| **Dashboard Widgets** | 🟡 In Progress | Template structure exists, logic needed |
+| **Dashboard Widgets** | ✅ Implemented | 5 widgets: activity, top performers, financial, pending, alerts |
 
 ### Frontend & UI
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Responsive Layout** | 🟡 In Progress | Base layout created with Tailwind CSS |
-| **Navigation Menu** | 🟡 In Progress | Navigation component created, needs population |
-| **User Management UI** | 🟡 In Progress | Create/Edit forms built, other CRUD views needed |
-| **Product Management UI** | ❌ Not Started | Views needed |
-| **Sales/Purchase UI** | ❌ Not Started | Forms and tables needed |
-| **Reporting UI** | ❌ Not Started | Report forms and results pages needed |
-| **Dashboard** | 🟡 In Progress | Basic template created, widgets needed |
-| **Mobile Responsiveness** | 🟡 In Progress | Tailwind CSS framework in place |
+| **Responsive Layout** | ✅ Implemented | Bootstrap 5 responsive grid, mobile-optimized CSS |
+| **Navigation Menu** | ✅ Implemented | Bootstrap navbar with role/permission links via @can |
+| **User Management UI** | ✅ Implemented | Full CRUD modal interface, role/status badges |
+| **Product Management UI** | ✅ Implemented | Full CRUD, search/filter, debounced search, admin verify delete |
+| **Sales/Purchase UI** | ✅ Implemented | Dynamic line items, stock validation, view modals |
+| **Reporting UI** | ✅ Implemented | 4 report types, tab switching, dynamic filters, CSV export |
+| **Dashboard** | ✅ Implemented | Live stats, 5 widgets, auto-refresh, role-based sections |
+| **Stock Adjustments UI** | ✅ Implemented | Adjustment form, recent adjustments table |
+| **Categories/Suppliers/Customers UI** | ✅ Implemented | Full CRUD with admin verify delete for Manager |
+| **Mobile Responsiveness** | ✅ Implemented | Touch targets, responsive modals, table-responsive wrappers |
 | **Barcode Scanner Integration** | ❌ Not Started | Will use browser APIs |
 
 ---
@@ -472,8 +475,8 @@ php artisan optimize:clear
 
 ### Frontend Stack
 - **Template Engine:** Laravel Blade (server-side templates)
-- **CSS Framework:** Tailwind CSS 3 (utility-first styling)
-- **JavaScript:** Alpine.js 3 (lightweight reactivity)
+- **CSS Framework:** Bootstrap 5 (component-based styling)
+- **JavaScript:** Vanilla JavaScript + Axios (AJAX)
 - **Build Tool:** Vite 7 (fast bundling and dev server)
 - **Package Manager:** NPM
 
@@ -693,20 +696,61 @@ php artisan optimize:clear
 - **Scripts:**
   - `npm run dev` - Start Vite dev server for frontend
   - `npm run build` - Build production CSS and JavaScript
-- **Dependencies:** Tailwind CSS, Alpine.js, Axios
+- **Dependencies:** Bootstrap 5, Axios
 - **Key Role:** Frontend dependency management and build automation
 
 ### CSS & JavaScript
 
 **Application CSS** (`resources/css/app.css`)
-- **Purpose:** Import Tailwind CSS and define custom styles
-- **Directives:** @tailwind for base, components, utilities
+- **Purpose:** Import Bootstrap CSS and define custom styles (minimal overrides)
 - **Key Role:** Foundation for all styling in the application
 
 **Application JavaScript** (`resources/js/app.js`)
 - **Purpose:** Main JavaScript entry point
-- **Imports:** Alpine.js and custom utilities
+- **Imports:** Bootstrap bundle + feature modules (e.g., products) + shared utilities (toasts)
 - **Key Role:** Initialize interactive components and UI behaviors
+
+---
+
+## ✅ Phase 5 — Frontend Implementation (Complete — March 15, 2026)
+
+**Goal:** Build Blade + Bootstrap UI pages that call backend APIs via AJAX (Axios) and provide a responsive, professional interface.
+
+**Architecture:**
+- Modular vanilla JavaScript — each page has its own module loaded lazily via `data-page` body attribute in `app.js`
+- Centralized Axios client (`resources/js/api/client.js`) with CSRF, auth token, request/response interceptors, and 401 redirect
+- Shared utilities: `toast.js`, `modal.js`, `validation.js`, `permissions.js`, `cache.js`, `export.js`
+- All views extend `layouts.app` and use Bootstrap 5 + Font Awesome icons
+- `@can` directives gate all create/edit/delete UI elements
+- Manager delete always requires admin verification modal (`POST /api/verify-admin`)
+
+**Completed modules and views:**
+
+| Module | View | Description |
+|--------|------|-------------|
+| `dashboard.js` | `dashboard/index.blade.php` | Stats, auto-refresh, 5 widgets (activity, top performers, financial, pending, alerts) |
+| `products.js` | `products/index.blade.php` | Full CRUD, search/filter, debounced search, admin verify delete |
+| `purchases.js` | `purchases/index.blade.php` | Full CRUD, dynamic line items, view modal |
+| `sales.js` | `sales/index.blade.php` | Full CRUD, stock validation, dynamic line items |
+| `stock-adjustments.js` | `stock-adjustments/index.blade.php` | Adjustment form, recent adjustments table, cached product dropdown |
+| `reports.js` | `reports/index.blade.php` | 4 report types, tab switching, dynamic filters, CSV export |
+| `users.js` | `users/index.blade.php` | Full CRUD, role dropdown, status badges, password optional on edit |
+| `categories.js` | `categories/index.blade.php` | Full CRUD, admin verify delete for Manager |
+| `suppliers.js` | `suppliers/index.blade.php` | Full CRUD, admin verify delete for Manager |
+| `customers.js` | `customers/index.blade.php` | Full CRUD, admin verify delete for Manager |
+
+**Backend additions for Phase 5:**
+- `app/Http/Controllers/Api/UserController.php` — New API controller (full CRUD + `/api/users/roles`)
+- `app/Http/Controllers/Api/ReportController.php` — Added `profitLoss()` and `stockMovement()` methods
+- `routes/api.php` — Added users routes, profit-loss and stock-movement report routes
+- `app/Models/User.php` — Added `status` to fillable
+
+**Bug fixes (test suite — all 66 tests, 141 assertions passing):**
+- `AuthController::login` — Fixed `getAllPermissions()` call (non-existent), replaced with `load('role')`
+- `AuthController::login` — Fixed `!$user->is_active` → `$user->status === 'inactive'`
+- `AuthController::logout` — Guarded `currentAccessToken()` against null
+- `ReportController::dashboard` — Fixed `is_resolved` → `is_read`, `unit_price` → `selling_price`
+- Published missing Sanctum migration (`personal_access_tokens` table)
 
 ---
 
@@ -718,8 +762,8 @@ php artisan optimize:clear
 | Phase 1: Database & Models | ✅ Complete | Jan 21, 2026 | Migrations, models, schema |
 | Phase 2: Auth & Authorization | ✅ Complete | Jan 27, 2026 | RBAC, user management, auth views |
 | Phase 3: Core Business Logic | ✅ Complete | Mar 6, 2026 | API controllers, business logic, test suite |
-| Phase 4: API & Testing | 🟡 In Progress | Mar 15, 2026 | Integration tests, API documentation |
-| Phase 5: Frontend Implementation | ⏳ Planned | Apr 10, 2026 | All UI views, forms, dashboards |
+| Phase 4: API & Testing | ✅ Complete | Mar 15, 2026 | Integration tests, API documentation, 66 tests passing |
+| Phase 5: Frontend Implementation | ✅ Complete | Mar 15, 2026 | All UI views, forms, dashboards, JS modules |
 | Phase 6: Notifications & Jobs | ⏳ Planned | Apr 20, 2026 | Email alerts, scheduled tasks |
 | Phase 7: QA & Bug Fixing | ⏳ Planned | Apr 30, 2026 | Testing, fixes, UAT |
 | Phase 8: Deployment | ⏳ Planned | May 10, 2026 | Live deployment, documentation |
@@ -736,30 +780,21 @@ Currently None — The project is on track with clean architecture. As developme
 
 Based on current progress, the following tasks should be prioritized:
 
-1. **Start Phase 4 — API Documentation & Integration Testing:**
-   - Write integration tests for API endpoints
-   - Document API endpoints with request/response examples
-   - Test end-to-end workflows (purchase → stock update → sale)
-   - Add API authentication tests
+1. **Start Phase 6 — Notifications & Background Jobs:**
+   - Implement email notifications for low-stock alerts
+   - Set up Laravel scheduled tasks (artisan commands)
+   - Build alert resolution workflow in the UI
+   - Queue-based email dispatch
 
-2. **Begin Phase 5 — Frontend Implementation:**
-   - Create product management UI (list, create, edit views)
-   - Implement purchase order UI with line items
-   - Build sales interface with product search
-   - Create dashboard with real-time statistics
-   - Implement stock adjustment interface
+2. **Enhance Reporting:**
+   - Add PDF generation for invoices and reports (barryvdh/laravel-dompdf)
+   - Add visual charts to dashboard (Chart.js or similar)
+   - Add barcode scanner integration (browser APIs)
 
-3. **Enhance Reporting:**
-   - Add date range filters to reports
-   - Implement CSV export functionality
-   - Add PDF generation for invoices and reports
-   - Create visual charts for dashboard
-
-4. **Low-Stock Alert System:**
-   - Implement automated alert generation
-   - Create alert notification UI
-   - Add email notifications for critical alerts
-   - Build alert resolution workflow
+3. **Phase 7 — QA & Bug Fixing:**
+   - Cross-browser compatibility testing (Chrome, Firefox, Safari, Edge)
+   - UAT with FRACA SERVCOM staff
+   - Performance testing with large datasets
 
 ---
 
@@ -812,6 +847,6 @@ Keep the document structure consistent and avoid adding code snippets — this i
 
 ---
 
-**Last Reviewed:** March 6, 2026 (Updated after Phase 3 progress - test suite fixed)  
-**Development Phase:** 3 (Core Business Logic - 100% complete, all unit tests passing)  
-**System Status:** ✅ Backend Complete (API controllers complete, test suite passing, ready for frontend);
+**Last Reviewed:** March 15, 2026 (Updated after Phase 5 completion — all frontend modules, test suite 66/66 passing)  
+**Development Phase:** 5 (Frontend Implementation — 100% complete)  
+**System Status:** ✅ Phases 0–5 Complete (Backend API + full frontend RBAC dashboard; ready for Phase 6 notifications)

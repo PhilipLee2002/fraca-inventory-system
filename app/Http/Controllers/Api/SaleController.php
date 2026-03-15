@@ -58,12 +58,12 @@ class SaleController extends BaseController
             DB::beginTransaction();
 
             // Get input data using input() method
-            $items = $request->input('items');
-            $customerId = $request->input('customer_id');
-            $saleDate = $request->input('sale_date');
-            $paymentMethod = $request->input('payment_method');
-            $notes = $request->input('notes');
-            $status = $request->input('status', 'pending');
+            $items         = $request->input('items');
+            $customerId    = $request->input('customer_id');
+            $saleDate      = $request->input('sale_date');
+            $paymentMethod = $request->input('payment_method', 'cash');
+            $notes         = $request->input('notes');
+            $status        = $request->input('status', 'pending');
 
             // VALIDATION: Check stock FIRST
             foreach ($items as $item) {
@@ -140,14 +140,41 @@ class SaleController extends BaseController
             $sale->load([
                 'customer',
                 'items.product',
-                'payments',
-                'createdBy'
+                'user:id,name',
             ]);
 
             return $this->sendSuccess($sale, 'Sale retrieved successfully');
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving sale: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a sale.
+     */
+    public function destroy(Sale $sale)
+    {
+        try {
+            DB::beginTransaction();
+            // Reverse stock for each item
+            foreach ($sale->items as $item) {
+                $item->product->increment('current_stock', $item->quantity);
+                StockHistory::create([
+                    'product_id'       => $item->product_id,
+                    'quantity_change'  => $item->quantity,
+                    'transaction_type' => 'adjustment',
+                    'reference_id'     => $sale->id,
+                    'notes'            => "Sale deleted: {$sale->invoice_number}",
+                ]);
+            }
+            $sale->items()->delete();
+            $sale->delete();
+            DB::commit();
+            return $this->sendDeleted('Sale deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Error deleting sale: ' . $e->getMessage());
         }
     }
 

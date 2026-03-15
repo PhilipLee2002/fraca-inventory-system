@@ -9,18 +9,18 @@
 | Property | Value |
 |----------|-------|
 | **Project Name** | FRACA SERVCOM Inventory Management System |
-| **System Under Test (SUT)** | Laravel 12 Backend API + MySQL Database |
+| **System Under Test (SUT)** | Laravel 12 Web App (Blade + Bootstrap UI + AJAX) + API + MySQL Database |
 | **Prepared By** | QA Development Team |
 | **Date** | February 14, 2026 |
 | **Version** | 1.0 |
 | **Status** | Draft - Ready for Review |
-| **Scope** | Backend API Testing (Unit, Integration, System, Non-Functional) |
+| **Scope** | Full System Testing (Backend + Frontend UI + E2E) |
 
 ---
 
 ## 1.0 INTRODUCTION
 
-This document describes the comprehensive test strategy, test procedures, and test cases for the FRACA SERVCOM Inventory Management System. The system is a web-based inventory management solution designed for medium-sized businesses specializing in furniture and hardware supplies. This test plan provides a systematic approach to ensure the backend API and database functionality meet specified requirements and quality standards before production deployment.
+This document describes the comprehensive test strategy, test procedures, and test cases for the FRACA SERVCOM Inventory Management System. The system is a web-based inventory management solution designed for medium-sized businesses specializing in furniture and hardware supplies. This test plan provides a systematic approach to ensure the full system (frontend UI, backend API, and database) meets specified requirements and quality standards before production deployment.
 
 ### 1.1 Goals and Objectives
 
@@ -45,6 +45,14 @@ The primary goals of this testing activity are:
 #### In Scope
 
 The following components and features are included in the testing scope:
+
+**Frontend UI (Phase 5):**
+- Blade views render correctly for authenticated/unauthenticated users
+- Bootstrap 5 layout responsiveness (desktop/tablet/mobile)
+- AJAX flows using Axios (no full page reload for CRUD operations)
+- Form validation UX: inline field errors + toast notifications
+- Role/permission UX: menu visibility + blocked actions handled gracefully
+- Asset compilation/build (Vite) and runtime JS errors
 
 **Database & Models:**
 - All 13 Eloquent models (User, Role, Product, Category, Supplier, Customer, Purchase, PurchaseItem, Sale, SaleItem, StockHistory, Alert, StockAdjustment)
@@ -80,12 +88,11 @@ The following components and features are included in the testing scope:
 
 #### Out of Scope
 
-The following items are explicitly excluded from this testing phase:
+The following items are explicitly excluded from this testing phase (or tested only as smoke checks):
 
-- **Frontend UI/UX Testing** – Blade views, CSS styling, form validation UI (scheduled for Phase 5)
 - **Barcode Scanner Hardware** – USB scanner or phone camera integration (Phase 5+)
 - **Email Notifications** – Sending actual emails to users (Phase 6, requires SMTP setup)
-- **PDF/CSV Export** – Report rendering to file formats (Phase 5+)
+- **PDF/CSV Export** – Report rendering to file formats (Phase 5+; optional)
 - **Load/Stress Testing** – High-volume user testing, database scalability (Phase 7)
 - **Mobile App Integration** – iOS/Android clients (future phase)
 - **Backup/Disaster Recovery** – Database backup procedures, restoration testing (operational phase)
@@ -121,27 +128,32 @@ This section describes the overall testing strategy and project management appro
 
 **System Components (SCI's):**
 
-1. **API Layer** — All endpoints in `/api/v1/` routes file
+1. **Web UI Layer (Blade + Bootstrap + JS)** — Pages in `routes/web.php` + Blade views + Vite-built assets
+   - Dashboard, Products, Purchases, Sales, Stock Adjustments, Users/Profile
+   - Navigation visibility and route guards (auth, verified, role, permission)
+   - AJAX behavior: Axios requests, loading states, inline errors, toasts
+
+2. **API Layer** — All endpoints in `/api/` routes file
    - ProductController, SaleController, PurchaseController, AuthController, ReportController
    - Request validation rules (StoreSaleRequest, StorePurchaseRequest, etc.)
    - Request/response serialization (JSON)
 
-2. **Model Layer** — 13 Eloquent models with relationships and scopes
+3. **Model Layer** — 13 Eloquent models with relationships and scopes
    - Proper hydration of relationships (belongsTo, hasMany, belongsToMany)
    - Model events (created, saved, deleting)
    - Query optimization (eager loading, indexes)
 
-3. **Database Layer** — 13 tables, migrations, seeders, constraints
+4. **Database Layer** — 13 tables, migrations, seeders, constraints
    - Table structure, column types, nullability
    - Foreign key relationships
    - Unique and indexed columns
 
-4. **Service/Business Logic Layer** — (To be implemented)
+5. **Service/Business Logic Layer** — (Implemented in controllers/services where applicable)
    - StockService, SaleService, PurchaseService, AlertService
    - Transaction handling, atomicity, rollback
    - Calculation and validation logic
 
-5. **Testing Utilities** — Test factories, seeders, fixtures
+6. **Testing Utilities** — Test factories, seeders, fixtures
    - UserFactory, ProductFactory, SaleFactory, etc.
    - Database seeders (RolesTableSeeder, UsersTableSeeder, PermissionSeeder)
    - Test data population
@@ -151,6 +163,8 @@ This section describes the overall testing strategy and project management appro
 - Blade templates and view logic
 - CSS/JavaScript/asset compilation
 - Third-party packages (Laravel Breeze scaffolding assumes correct operation)
+
+**Note:** The exclusions above applied to Phase 4 (backend-only). For “system running fully”, Phase 5 adds UI testing and E2E flows to this plan.
 
 ---
 
@@ -163,6 +177,17 @@ The testing strategy employs a **multi-layer testing pyramid** approach, with em
 - Integration & Feature Tests: 20-30%
 - System & E2E Tests: 10-15%
 - Manual/Exploratory: ~5%
+
+#### 2.2.0 Frontend (UI) Testing Strategy (Phase 5)
+
+**Objective:** Validate that the Blade + Bootstrap interface correctly drives backend workflows via AJAX without full reloads and that UI feedback is clear.
+
+**Approach:**
+1. **UI Smoke Tests** (manual): Can load pages after login, navigation works, no JS console errors, assets load.
+2. **CRUD UI Tests** (manual + scripted): Products/Purchases/Sales/Adjustments flows using modals/forms and verifying table updates.
+3. **Authorization UX Tests:** Staff vs Admin visibility and blocked actions.
+4. **Error Handling UX Tests:** Validation errors display inline; server errors show toast; loading states appear.
+5. **Responsive Tests:** Key pages verified at common breakpoints (mobile/tablet/desktop).
 
 #### 2.2.1 Unit Testing Strategy
 
@@ -392,6 +417,7 @@ All test results are recorded using:
 | **PHPUnit** | Unit & integration testing framework | 10.0+ |
 | **Postman** | API request/response testing | Latest desktop |
 | **Newman** | Postman CLI for automation | Latest |
+| **Browser DevTools** | UI/E2E verification (Network/Console) | Latest |
 | **Git** | Version control, CI/CD trigger | 2.30+ |
 | **GitHub Actions** | Continuous Integration/Deployment | Built-in |
 | **Laravel Artisan** | CLI for migrations, seeders, serving | Built-in |

@@ -2,40 +2,40 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
 class StockAdjustmentRequest extends ApiRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
-        return $this->user()->can('adjust-stock', \App\Models\Product::class);
+        return true; // Route middleware handles permission:manage-stock
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'product_id' => 'required|exists:products,id',
-            'adjustment_type' => 'required|in:addition,subtraction,correction',
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'required|string|max:255',
-            'reference' => 'nullable|string|max:100',
-            'adjusted_date' => 'required|date',
-            'notes' => 'nullable|string',
+            'product_id'      => 'required|exists:products,id',
+            'quantity_change' => 'required|integer|not_in:0',
+            'reason'          => 'required|string|max:500',
         ];
     }
 
-    public function withValidator($validator)
+    public function messages(): array
+    {
+        return [
+            'quantity_change.not_in' => 'Quantity change cannot be zero.',
+        ];
+    }
+
+    public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if ($this->has('product_id') && $this->has('adjustment_type') && $this->has('quantity')) {
+            if ($this->filled('product_id') && $this->filled('quantity_change')) {
                 $product = \App\Models\Product::find($this->input('product_id'));
-                
-                if ($this->input('adjustment_type') === 'subtraction') {
-                    $currentStock = $product->stock_quantity;
-                    if ($currentStock < $this->input('quantity')) {
+                if ($product && $this->input('quantity_change') < 0) {
+                    $abs = abs($this->input('quantity_change'));
+                    if ($product->current_stock < $abs) {
                         $validator->errors()->add(
-                            'quantity',
-                            "Cannot subtract more than available stock. Available: {$currentStock}"
+                            'quantity_change',
+                            "Cannot remove {$abs} units. Only {$product->current_stock} in stock."
                         );
                     }
                 }

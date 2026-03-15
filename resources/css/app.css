@@ -1,3 +1,239 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Import Bootstrap */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* ========== Custom Color Scheme ========== */
+:root {
+    --primary-red: #dc3545;
+    --secondary-black: #343a40;
+    --footer-blue: #007bff;
+    --white: #ffffff;
+}
+
+/* ========== Primary Button Styling ========== */
+.btn-primary {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+    color: var(--white) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+    color: var(--white) !important;
+}
+
+/* ========== Secondary Button Styling ========== */
+.btn-secondary {
+    background-color: var(--secondary-black) !important;
+    border-color: var(--secondary-black) !important;
+    color: var(--white) !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active {
+    background-color: #23272b !important;
+    border-color: #1d2124 !important;
+    color: var(--white) !important;
+}
+
+/* ========== Footer Styling ========== */
+.footer {
+    background-color: var(--footer-blue) !important;
+    color: var(--white) !important;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+}
+
+.footer a {
+    color: var(--white);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========== Body Layout ========== */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+/* ========== Responsive Utilities ========== */
+/* Mobile touch target sizing - minimum 44x44 pixels */
+@media (max-width: 767.98px) {
+    .btn,
+    .nav-link,
+    .dropdown-item,
+    .form-control,
+    .form-select,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Ensure clickable elements have adequate spacing */
+    .btn + .btn {
+        margin-left: 0.5rem;
+    }
+
+    /* Stack buttons vertically on very small screens */
+    .btn-group-vertical .btn {
+        width: 100%;
+    }
+}
+
+/* ========== Table Responsive ========== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ========== Loading States ========== */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* ========== Form Validation ========== */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: none;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* ========== Toast Notifications ========== */
+.toast {
+    min-width: 250px;
+}
+
+.toast-header {
+    font-weight: 600;
+}
+
+/* ========== Modal Enhancements ========== */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}
+
+/* ========== Utility Classes ========== */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* ========== Dashboard Cards ========== */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* ========== Quick Action Buttons ========== */
+.quick-action-btn {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+/* ========== Dashboard Stat Icon ========== */
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ========== Quick Action Buttons ========== */
+.btn-action-primary {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+    color: var(--white);
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.15s ease;
+}
+
+.btn-action-primary:hover,
+.btn-action-primary:focus {
+    background-color: #b02a37;
+    border-color: #b02a37;
+    color: var(--white);
+    opacity: 0.9;
+}
+
+.btn-action-dark {
+    background-color: var(--secondary-black);
+    border-color: var(--secondary-black);
+    color: var(--white);
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.15s ease;
+}
+
+.btn-action-dark:hover,
+.btn-action-dark:focus {
+    background-color: #23272b;
+    border-color: #23272b;
+    color: var(--white);
+    opacity: 0.9;
+}
+
+/* ========== Dashboard section headings ========== */
+.dashboard-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--secondary-black);
+    border-left: 3px solid var(--primary-red);
+    padding-left: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* ========== Widget helpers ========== */
+.alert-sm {
+    font-size: 0.85rem;
+}

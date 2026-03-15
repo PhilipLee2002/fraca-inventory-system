@@ -6,37 +6,32 @@ use Illuminate\Contracts\Validation\Validator;
 
 class StoreProductRequest extends ApiRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Product::class);
+        return true; // Route middleware handles permission:create-product
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:products,name',
-            'sku' => 'required|string|max:100|unique:products,sku',
-            'description' => 'nullable|string',
-            'category_id' => 'required|exists:categories,id',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'cost_price' => 'required|numeric|min:0',
+            'name'          => 'required|string|max:255|unique:products,name',
+            'sku'           => 'required|string|max:100|unique:products,sku',
+            'barcode'       => 'nullable|string|max:100|unique:products,barcode',
+            'description'   => 'nullable|string',
+            'category_id'   => 'required|exists:categories,id',
+            'supplier_id'   => 'nullable|exists:suppliers,id',
+            'cost_price'    => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0|gte:cost_price',
-            'reorder_level' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
+            'current_stock' => 'required|integer|min:0',
+            'reorder_level' => 'required|integer|min:0',
+            'is_active'     => 'boolean',
         ];
     }
 
-    public function messages()
+    public function messages(): array
     {
         return [
             'selling_price.gte' => 'Selling price must be greater than or equal to cost price.',
         ];
-    }
-
-    public function withValidator(Validator $validator)
-    {
-        $validator->after(function ($validator) {
-            // Stock validations removed - now handled in controller
-        });
     }
 }

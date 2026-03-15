@@ -37,7 +37,7 @@ class Role extends Model
     /**
      * Roles can have many permissions (many-to-many)
      */
-    public function permissions()
+    public function rolePermissions()
     {
         return $this->belongsToMany(Permission::class, 'role_permission');
     }
@@ -48,6 +48,6 @@ class Role extends Model
     public function hasPermission($permission)
     {
         // Check in the many-to-many relationship
-        return $this->permissions()->where('name', $permission)->exists();
+        return $this->rolePermissions()->where('name', $permission)->exists();
     }
 }

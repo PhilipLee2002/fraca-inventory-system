@@ -128,13 +128,41 @@ class PurchaseController extends BaseController
             $purchase->load([
                 'supplier',
                 'items.product',
-                'createdBy'
+                'user:id,name',
             ]);
 
             return $this->sendSuccess($purchase, 'Purchase retrieved successfully');
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving purchase: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a purchase.
+     */
+    public function destroy(Purchase $purchase)
+    {
+        try {
+            DB::beginTransaction();
+            // Reverse stock for each item
+            foreach ($purchase->items as $item) {
+                $item->product->decrement('current_stock', $item->quantity);
+                StockHistory::create([
+                    'product_id'       => $item->product_id,
+                    'quantity_change'  => -$item->quantity,
+                    'transaction_type' => 'adjustment',
+                    'reference_id'     => $purchase->id,
+                    'notes'            => "Purchase deleted: {$purchase->purchase_number}",
+                ]);
+            }
+            $purchase->items()->delete();
+            $purchase->delete();
+            DB::commit();
+            return $this->sendDeleted('Purchase deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Error deleting purchase: ' . $e->getMessage());
         }
     }
 

@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * @property int $id
@@ -32,7 +33,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
-        
+        'status',
     ];
 
     /**
@@ -65,7 +66,7 @@ class User extends Authenticatable
      */
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class)->with('rolePermissions');
     }
 
     /**
@@ -106,9 +107,7 @@ class User extends Authenticatable
     public function hasPermission($permission)
     {
         if (!$this->role) return false;
-        
-        // Call the role's hasPermission method which works with JSON array
-        return $this->role->hasPermission($permission);
+        return $this->role->rolePermissions->contains('name', $permission);
     }
 
     /**
