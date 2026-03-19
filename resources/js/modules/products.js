@@ -155,7 +155,7 @@ export class ProductsModule {
                 <td>${this.esc(p.name)}</td>
                 <td>${this.esc(p.category?.name ?? '—')}</td>
                 <td class="text-center ${qtyClass}">${p.current_stock}${qtyBadge}</td>
-                <td class="text-end">$${parseFloat(p.selling_price ?? p.unit_price ?? 0).toFixed(2)}</td>
+                <td class="text-end">${window.formatKES(p.selling_price ?? p.unit_price ?? 0)}</td>
                 <td class="text-end">${editBtn}${deleteBtn}</td>
             </tr>`;
         }).join('');

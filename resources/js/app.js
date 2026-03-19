@@ -11,6 +11,10 @@ import { displayValidationErrors, clearValidationErrors, isValidEmail, validateR
 import { showAdminVerifyModal, showConfirmModal } from './utils/modal.js';
 import apiClient from './api/client.js';
 
+// Currency formatter — Kenyan Shillings
+window.formatKES = (value) =>
+    'KSh ' + parseFloat(value ?? 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 // Make utilities globally available
 window.utils = {
     showToast,

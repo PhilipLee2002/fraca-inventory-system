@@ -131,7 +131,7 @@
                         <div class="col-md-3">
                             <label class="form-label">Cost Price <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">KSh</span>
                                 <input type="number" class="form-control" name="cost_price" id="product-cost-price"
                                        min="0" step="0.01" required>
                             </div>
@@ -140,7 +140,7 @@
                         <div class="col-md-3">
                             <label class="form-label">Selling Price <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">KSh</span>
                                 <input type="number" class="form-control" name="selling_price" id="product-selling-price"
                                        min="0" step="0.01" required>
                             </div>

@@ -137,8 +137,8 @@ export class ReportsModule {
         this.renderSummaryCards([
             { label: 'Total Products',  value: summary.total_products ?? 0,                                    icon: 'fa-box',        color: 'primary' },
             { label: 'Total Stock',     value: summary.total_items_in_stock ?? 0,                              icon: 'fa-cubes',      color: 'info' },
-            { label: 'Cost Valuation',  value: '$' + parseFloat(summary.total_valuation ?? 0).toFixed(2),     icon: 'fa-dollar-sign',color: 'warning' },
-            { label: 'Potential Profit',value: '$' + parseFloat(summary.total_potential_profit ?? 0).toFixed(2), icon: 'fa-chart-line', color: 'success' },
+            { label: 'Cost Valuation',  value: window.formatKES(summary.total_valuation ?? 0),        icon: 'fa-coins',      color: 'warning' },
+            { label: 'Potential Profit',value: window.formatKES(summary.total_potential_profit ?? 0), icon: 'fa-chart-line', color: 'success' },
         ]);
 
         const tbody = document.getElementById('tbody-inventory');
@@ -148,9 +148,9 @@ export class ReportsModule {
             '<td>' + this.esc(p.name) + '</td>' +
             '<td>' + this.esc(p.category?.name ?? '—') + '</td>' +
             '<td class="text-center">' + p.current_stock + '</td>' +
-            '<td class="text-end">$' + parseFloat(p.valuation ?? 0).toFixed(2) + '</td>' +
-            '<td class="text-end">$' + parseFloat(p.potential_revenue ?? 0).toFixed(2) + '</td>' +
-            '<td class="text-end text-success">$' + parseFloat(p.potential_profit ?? 0).toFixed(2) + '</td>' +
+            '<td class="text-end">' + window.formatKES(p.valuation ?? 0) + '</td>' +
+            '<td class="text-end">' + window.formatKES(p.potential_revenue ?? 0) + '</td>' +
+            '<td class="text-end text-success">' + window.formatKES(p.potential_profit ?? 0) + '</td>' +
             '</tr>'
         ).join('');
     }
@@ -159,9 +159,9 @@ export class ReportsModule {
         const sales   = data?.sales?.data ?? [];
         const summary = data?.summary ?? {};
         this.renderSummaryCards([
-            { label: 'Total Revenue',  value: '$' + parseFloat(summary.total_sales ?? 0).toFixed(2),        icon: 'fa-dollar-sign', color: 'success' },
-            { label: 'Transactions',   value: summary.total_transactions ?? 0,                               icon: 'fa-receipt',     color: 'primary' },
-            { label: 'Avg Sale Value', value: '$' + parseFloat(summary.average_sale_value ?? 0).toFixed(2), icon: 'fa-chart-bar',   color: 'info' },
+            { label: 'Total Revenue',  value: window.formatKES(summary.total_sales ?? 0),        icon: 'fa-coins',   color: 'success' },
+            { label: 'Transactions',   value: summary.total_transactions ?? 0,                     icon: 'fa-receipt', color: 'primary' },
+            { label: 'Avg Sale Value', value: window.formatKES(summary.average_sale_value ?? 0),   icon: 'fa-chart-bar', color: 'info' },
         ]);
 
         const tbody = document.getElementById('tbody-sales');
@@ -173,7 +173,7 @@ export class ReportsModule {
                 '<td><code class="small">' + this.esc(s.invoice_number) + '</code></td>' +
                 '<td>' + this.esc(customer) + '</td>' +
                 '<td>' + (s.sale_date ?? '—') + '</td>' +
-                '<td class="text-end">$' + parseFloat(s.total_amount ?? 0).toFixed(2) + '</td>' +
+                '<td class="text-end">' + window.formatKES(s.total_amount ?? 0) + '</td>' +
                 '<td class="text-center"><span class="badge ' + statusCls + '">' + s.status + '</span></td>' +
                 '</tr>';
         }).join('');
@@ -184,9 +184,9 @@ export class ReportsModule {
         const summary   = data?.summary ?? {};
         const profitCls = (summary.profit ?? 0) >= 0 ? 'success' : 'danger';
         this.renderSummaryCards([
-            { label: 'Revenue',    value: '$' + parseFloat(summary.revenue ?? 0).toFixed(2),  icon: 'fa-arrow-up',      color: 'success' },
-            { label: 'Expenses',   value: '$' + parseFloat(summary.expenses ?? 0).toFixed(2), icon: 'fa-arrow-down',    color: 'danger' },
-            { label: 'Net Profit', value: '$' + parseFloat(summary.profit ?? 0).toFixed(2),   icon: 'fa-balance-scale', color: profitCls },
+            { label: 'Revenue',    value: window.formatKES(summary.revenue ?? 0),  icon: 'fa-arrow-up',      color: 'success' },
+            { label: 'Expenses',   value: window.formatKES(summary.expenses ?? 0), icon: 'fa-arrow-down',    color: 'danger' },
+            { label: 'Net Profit', value: window.formatKES(summary.profit ?? 0),   icon: 'fa-balance-scale', color: profitCls },
             { label: 'Margin',     value: (summary.margin ?? 0) + '%',                        icon: 'fa-percent',       color: 'info' },
         ]);
 
@@ -196,9 +196,9 @@ export class ReportsModule {
             const profitColor = row.profit >= 0 ? 'text-success' : 'text-danger';
             return '<tr>' +
                 '<td>' + row.date + '</td>' +
-                '<td class="text-end text-success">$' + parseFloat(row.revenue).toFixed(2) + '</td>' +
-                '<td class="text-end text-danger">$' + parseFloat(row.expenses).toFixed(2) + '</td>' +
-                '<td class="text-end ' + profitColor + ' fw-semibold">$' + parseFloat(row.profit).toFixed(2) + '</td>' +
+                '<td class="text-end text-success">' + window.formatKES(row.revenue) + '</td>' +
+                '<td class="text-end text-danger">' + window.formatKES(row.expenses) + '</td>' +
+                '<td class="text-end ' + profitColor + ' fw-semibold">' + window.formatKES(row.profit) + '</td>' +
                 '<td class="text-center">' + row.transactions + '</td>' +
                 '</tr>';
         }).join('');
@@ -233,7 +233,7 @@ export class ReportsModule {
         const purchases = data?.purchases?.data ?? data?.data ?? [];
         const summary   = data?.summary ?? {};
         this.renderSummaryCards([
-            { label: 'Total Purchases', value: '$' + parseFloat(summary.total_amount ?? 0).toFixed(2), icon: 'fa-shopping-cart', color: 'primary' },
+            { label: 'Total Purchases', value: window.formatKES(summary.total_amount ?? 0), icon: 'fa-shopping-cart', color: 'primary' },
             { label: 'Transactions',    value: summary.total_transactions ?? purchases.length,          icon: 'fa-receipt',       color: 'info' },
         ]);
 
@@ -246,7 +246,7 @@ export class ReportsModule {
                 '<td><code class="small">' + this.esc(p.purchase_number) + '</code></td>' +
                 '<td>' + this.esc(p.supplier?.name ?? '—') + '</td>' +
                 '<td>' + (p.purchase_date ?? '—') + '</td>' +
-                '<td class="text-end">$' + parseFloat(p.total_amount ?? 0).toFixed(2) + '</td>' +
+                '<td class="text-end">' + window.formatKES(p.total_amount ?? 0) + '</td>' +
                 '<td class="text-center"><span class="badge ' + statusCls + '">' + p.status + '</span></td>' +
                 '</tr>';
         }).join('');
