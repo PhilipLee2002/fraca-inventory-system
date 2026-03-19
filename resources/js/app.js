@@ -1,7 +1,8 @@
 import './bootstrap';
 
-// Import Bootstrap JavaScript
-import 'bootstrap';
+// Import Bootstrap JavaScript and expose globally
+import * as bootstrap from 'bootstrap';
+window.bootstrap = bootstrap;
 
 // Import utilities
 import { showToast } from './utils/toast.js';
