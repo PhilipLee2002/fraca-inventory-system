@@ -68,22 +68,27 @@ export class ProductsModule {
     // ── Filters ───────────────────────────────────────────────────────────────
 
     async loadFilters() {
-        try {
-            const [catRes, supRes] = await Promise.all([
-                apiClient.get('/categories'),
-                apiClient.get('/suppliers'),
-            ]);
+        const extract = (res) => {
+            const d = res.data?.data;
+            // paginated: { data: [...], pagination: {...} }
+            if (d && Array.isArray(d.data)) return d.data;
+            // flat array
+            if (Array.isArray(d)) return d;
+            return [];
+        };
 
-            const categories = catRes.data?.data ?? [];
-            const suppliers  = supRes.data?.data ?? [];
+        const [catRes, supRes] = await Promise.allSettled([
+            apiClient.get('/categories'),
+            apiClient.get('/suppliers', { params: { per_page: 200 } }),
+        ]);
 
-            this.populateSelect('filter-category', categories, 'All Categories');
-            this.populateSelect('filter-supplier', suppliers, 'All Suppliers');
-            this.populateSelect('product-category', categories, 'Select category...');
-            this.populateSelect('product-supplier', suppliers, 'Select supplier...');
-        } catch {
-            // non-fatal — filters just won't be populated
-        }
+        const categories = catRes.status === 'fulfilled' ? extract(catRes.value) : [];
+        const suppliers  = supRes.status === 'fulfilled' ? extract(supRes.value) : [];
+
+        this.populateSelect('filter-category', categories, 'All Categories');
+        this.populateSelect('filter-supplier', suppliers, 'All Suppliers');
+        this.populateSelect('product-category', categories, 'Select category...');
+        this.populateSelect('product-supplier', suppliers, 'Select supplier...');
     }
 
     populateSelect(id, items, placeholder) {
