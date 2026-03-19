@@ -7,10 +7,23 @@ use Illuminate\Http\Request;
 
 class CategoryController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $categories = Category::orderBy('name')->get(['id', 'name', 'description']);
+            $query = Category::withCount('products')->orderBy('name');
+
+            if ($request->filled('search')) {
+                $query->where('name', 'like', '%' . $request->search . '%');
+            }
+
+            // If per_page is requested, paginate; otherwise return all (for dropdowns)
+            if ($request->filled('per_page') || $request->filled('page')) {
+                $perPage = min((int) $request->get('per_page', 20), 100);
+                $categories = $query->paginate($perPage);
+                return $this->sendPaginated($categories, 'Categories retrieved successfully');
+            }
+
+            $categories = $query->get();
             return $this->sendSuccess($categories, 'Categories retrieved successfully');
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving categories: ' . $e->getMessage());

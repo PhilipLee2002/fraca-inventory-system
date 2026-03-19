@@ -5,11 +5,13 @@ export class ProductsModule {
         this.currentPage = 1;
         this.searchTimer = null;
         this.editingId = null;
+        this.filtersReady = false;
+        this.filtersPromise = null;
     }
 
     init() {
         this.bindEvents();
-        this.loadFilters();
+        this.filtersPromise = this.loadFilters();
         this.loadProducts();
     }
 
@@ -190,32 +192,35 @@ export class ProductsModule {
 
     // ── Add / Edit Modal ──────────────────────────────────────────────────────
 
-    showProductModal(product = null) {
+    async showProductModal(product = null) {
         this.editingId = product?.id ?? null;
         const form = document.getElementById('productForm');
         const title = document.getElementById('productModalLabel');
 
         form.reset();
         window.utils?.clearValidationErrors(form);
-
         title.textContent = product ? 'Edit Product' : 'Add Product';
         document.getElementById('product-id').value = product?.id ?? '';
+
+        // Show modal immediately
+        const modal = new bootstrap.Modal(document.getElementById('productModal'));
+        modal.show();
+
+        // Wait for filters (categories/suppliers) to be populated before setting values
+        if (this.filtersPromise) await this.filtersPromise;
 
         if (product) {
             document.getElementById('product-name').value         = product.name ?? '';
             document.getElementById('product-sku').value          = product.sku ?? '';
             document.getElementById('product-barcode').value      = product.barcode ?? '';
             document.getElementById('product-description').value  = product.description ?? '';
-            document.getElementById('product-category').value      = product.category_id ?? '';
-            document.getElementById('product-supplier').value      = product.supplier_id ?? '';
-            document.getElementById('product-cost-price').value    = product.cost_price ?? '';
+            document.getElementById('product-category').value     = product.category_id ?? '';
+            document.getElementById('product-supplier').value     = product.supplier_id ?? '';
+            document.getElementById('product-cost-price').value   = product.cost_price ?? '';
             document.getElementById('product-selling-price').value = product.selling_price ?? '';
-            document.getElementById('product-quantity').value      = product.current_stock ?? '';
+            document.getElementById('product-quantity').value     = product.current_stock ?? '';
             document.getElementById('product-reorder-level').value = product.reorder_level ?? '';
         }
-
-        const modal = new bootstrap.Modal(document.getElementById('productModal'));
-        modal.show();
     }
 
     async editProduct(id) {
