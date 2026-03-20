@@ -57,9 +57,8 @@ class SaleController extends BaseController
         try {
             DB::beginTransaction();
 
-            // Get input data using input() method
             $items         = $request->input('items');
-            $customerId    = $request->input('customer_id');
+            $customerId    = $request->input('customer_id') ?: null;
             $saleDate      = $request->input('sale_date');
             $paymentMethod = $request->input('payment_method', 'cash');
             $notes         = $request->input('notes');
@@ -83,7 +82,7 @@ class SaleController extends BaseController
 
             // Create sale
             $sale = Sale::create([
-                'customer_id' => $customerId,
+                'customer_id' => $customerId ?: null,
                 'user_id' => auth()->id(),
                 'invoice_number' => 'INV-' . date('YmdHis'),
                 'sale_date' => $saleDate,
@@ -107,15 +106,19 @@ class SaleController extends BaseController
 
                 // Update product stock (decrease)
                 $product = Product::find($item['product_id']);
+                $previousStock = $product->current_stock;
                 $product->decrement('current_stock', $item['quantity']);
 
                 // Create stock history record
                 StockHistory::create([
-                    'product_id' => $item['product_id'],
-                    'quantity_change' => -$item['quantity'],
-                    'transaction_type' => 'sale',
-                    'reference_id' => $sale->id,
-                    'notes' => "Sale: {$sale->invoice_number}",
+                    'product_id'        => $item['product_id'],
+                    'quantity_change'   => -$item['quantity'],
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock - $item['quantity'],
+                    'transaction_type'  => 'sale',
+                    'reference_id'      => $sale->id,
+                    'reference_type'    => Sale::class,
+                    'notes'             => "Sale: {$sale->invoice_number}",
                 ]);
             }
 
@@ -159,13 +162,17 @@ class SaleController extends BaseController
             DB::beginTransaction();
             // Reverse stock for each item
             foreach ($sale->items as $item) {
+                $previousStock = $item->product->current_stock;
                 $item->product->increment('current_stock', $item->quantity);
                 StockHistory::create([
-                    'product_id'       => $item->product_id,
-                    'quantity_change'  => $item->quantity,
-                    'transaction_type' => 'adjustment',
-                    'reference_id'     => $sale->id,
-                    'notes'            => "Sale deleted: {$sale->invoice_number}",
+                    'product_id'        => $item->product_id,
+                    'quantity_change'   => $item->quantity,
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock + $item->quantity,
+                    'transaction_type'  => 'adjustment',
+                    'reference_id'      => $sale->id,
+                    'reference_type'    => Sale::class,
+                    'notes'             => "Sale deleted: {$sale->invoice_number}",
                 ]);
             }
             $sale->items()->delete();

@@ -23,7 +23,9 @@ class StockHistory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'quantity_change', 'transaction_type', 'reference_id', 'notes',
+        'product_id', 'quantity_change', 'transaction_type',
+        'previous_quantity', 'new_quantity',
+        'reference_id', 'reference_type', 'notes',
     ];
 
     public function product()

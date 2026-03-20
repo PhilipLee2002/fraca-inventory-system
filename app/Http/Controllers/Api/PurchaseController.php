@@ -95,15 +95,19 @@ class PurchaseController extends BaseController
 
                 // Update product stock
                 $product = Product::find($item['product_id']);
+                $previousStock = $product->current_stock;
                 $product->increment('current_stock', $item['quantity']);
 
                 // Create stock history record
                 StockHistory::create([
-                    'product_id' => $item['product_id'],
-                    'quantity_change' => $item['quantity'],
-                    'transaction_type' => 'purchase',
-                    'reference_id' => $purchase->id,
-                    'notes' => "Purchase: {$purchase->purchase_number}",
+                    'product_id'        => $item['product_id'],
+                    'quantity_change'   => $item['quantity'],
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock + $item['quantity'],
+                    'transaction_type'  => 'purchase',
+                    'reference_id'      => $purchase->id,
+                    'reference_type'    => Purchase::class,
+                    'notes'             => "Purchase: {$purchase->purchase_number}",
                 ]);
             }
 
@@ -147,13 +151,17 @@ class PurchaseController extends BaseController
             DB::beginTransaction();
             // Reverse stock for each item
             foreach ($purchase->items as $item) {
+                $previousStock = $item->product->current_stock;
                 $item->product->decrement('current_stock', $item->quantity);
                 StockHistory::create([
-                    'product_id'       => $item->product_id,
-                    'quantity_change'  => -$item->quantity,
-                    'transaction_type' => 'adjustment',
-                    'reference_id'     => $purchase->id,
-                    'notes'            => "Purchase deleted: {$purchase->purchase_number}",
+                    'product_id'        => $item->product_id,
+                    'quantity_change'   => -$item->quantity,
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock - $item->quantity,
+                    'transaction_type'  => 'adjustment',
+                    'reference_id'      => $purchase->id,
+                    'reference_type'    => Purchase::class,
+                    'notes'             => "Purchase deleted: {$purchase->purchase_number}",
                 ]);
             }
             $purchase->items()->delete();
