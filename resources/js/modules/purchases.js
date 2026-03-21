@@ -1,4 +1,4 @@
-import apiClient from '../api/client.js';
+﻿import apiClient from '../api/client.js';
 
 export class PurchasesModule {
     constructor() {
@@ -22,13 +22,14 @@ export class PurchasesModule {
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => { this.currentPage = 1; this.loadPurchases(); }, 300);
         });
-        ['filter-purchase-status','filter-purchase-from','filter-purchase-to'].forEach(id =>
+        ['filter-purchase-status', 'filter-purchase-from', 'filter-purchase-to'].forEach(id =>
             document.getElementById(id)?.addEventListener('change', () => { this.currentPage = 1; this.loadPurchases(); })
         );
         document.getElementById('btn-clear-purchase-filters')?.addEventListener('click', () => {
-            ['purchase-search','filter-purchase-status','filter-purchase-from','filter-purchase-to']
+            ['purchase-search', 'filter-purchase-status', 'filter-purchase-from', 'filter-purchase-to']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-            this.currentPage = 1; this.loadPurchases();
+            this.currentPage = 1;
+            this.loadPurchases();
         });
         document.getElementById('btn-new-purchase')?.addEventListener('click', () => this.showModal());
         document.getElementById('btn-save-purchase')?.addEventListener('click', () => this.save());
@@ -105,9 +106,9 @@ export class PurchasesModule {
         };
         tbody.innerHTML = purchases.map(p => {
             const eb = canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="' + p.id + '"><i class="fas fa-pencil-alt"></i></button>' : '';
-            const db = canDel  ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + p.id + '" data-ref="' + this.esc(p.po_number ?? p.id) + '"><i class="fas fa-trash"></i></button>' : '';
+            const db = canDel  ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + p.id + '" data-ref="' + this.esc(p.purchase_number ?? p.id) + '"><i class="fas fa-trash"></i></button>' : '';
             return '<tr>' +
-                '<td><button class="btn btn-link btn-sm p-0" data-action="view" data-id="' + p.id + '">' + this.esc(p.po_number ?? '#' + p.id) + '</button></td>' +
+                '<td><button class="btn btn-link btn-sm p-0" data-action="view" data-id="' + p.id + '">' + this.esc(p.purchase_number ?? '#' + p.id) + '</button></td>' +
                 '<td>' + this.esc(p.supplier?.name ?? '---') + '</td>' +
                 '<td>' + (p.purchase_date ?? (p.created_at ?? '').split('T')[0] ?? '---') + '</td>' +
                 '<td class="text-end">' + window.formatKES(p.total_amount ?? 0) + '</td>' +
@@ -178,7 +179,7 @@ export class PurchasesModule {
             ).join('');
             vb.innerHTML =
                 '<div class="row g-3 mb-3">' +
-                '<div class="col-md-3"><strong>PO Number:</strong><br>' + this.esc(p.po_number ?? '#' + p.id) + '</div>' +
+                '<div class="col-md-3"><strong>PO Number:</strong><br>' + this.esc(p.purchase_number ?? '#' + p.id) + '</div>' +
                 '<div class="col-md-3"><strong>Supplier:</strong><br>' + this.esc(p.supplier?.name ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Date:</strong><br>' + (p.purchase_date ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-' + (p.status === 'received' ? 'success' : p.status === 'cancelled' ? 'danger' : 'warning') + '">' + p.status + '</span></div>' +
@@ -190,7 +191,7 @@ export class PurchasesModule {
                 '<tbody>' + rows + '</tbody>' +
                 '<tfoot><tr><td colspan="3" class="text-end fw-bold">Total:</td><td class="text-end fw-bold">' + window.formatKES(p.total_amount ?? 0) + '</td></tr></tfoot>' +
                 '</table>';
-            document.getElementById('purchaseModalLabel').textContent = 'Purchase ' + (p.po_number ?? '#' + p.id);
+            document.getElementById('purchaseModalLabel').textContent = 'Purchase ' + (p.purchase_number ?? '#' + p.id);
             new bootstrap.Modal(document.getElementById('purchaseModal')).show();
         } catch {
             window.utils?.showToast('Failed to load purchase.', 'error');
@@ -242,6 +243,7 @@ export class PurchasesModule {
     async save() {
         const form = document.getElementById('purchaseForm');
         const btn  = document.getElementById('btn-save-purchase');
+        if (!btn) return;
         const spin = btn.querySelector('.spinner-border');
         window.utils?.clearValidationErrors(form);
         const items = [];
@@ -251,6 +253,10 @@ export class PurchasesModule {
             const pr  = parseFloat(row.querySelector('.item-price')?.value ?? 0);
             if (pid) items.push({ product_id: parseInt(pid), quantity: parseInt(qty), unit_price: parseFloat(pr) });
         });
+        if (!items.length) {
+            window.utils?.showToast('Please add at least one product.', 'error');
+            return;
+        }
         const payload = {
             supplier_id:    document.getElementById('purchase-supplier').value || null,
             purchase_date:  document.getElementById('purchase-date').value,
@@ -260,7 +266,7 @@ export class PurchasesModule {
             items,
         };
         btn.disabled = true;
-        spin.classList.remove('d-none');
+        if (spin) spin.classList.remove('d-none');
         try {
             if (this.editingId) {
                 await apiClient.put('/purchases/' + this.editingId, payload);
@@ -272,13 +278,14 @@ export class PurchasesModule {
             bootstrap.Modal.getInstance(document.getElementById('purchaseModal'))?.hide();
             this.loadPurchases();
         } catch (err) {
-            if (err.response?.status === 422)
+            if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
-            else
+            } else {
                 window.utils?.showToast(err.response?.data?.message ?? 'Failed to save purchase.', 'error');
+            }
         } finally {
             btn.disabled = false;
-            spin.classList.add('d-none');
+            if (spin) spin.classList.add('d-none');
         }
     }
 

@@ -1,4 +1,4 @@
-import apiClient from '../api/client.js';
+﻿import apiClient from '../api/client.js';
 
 export class SalesModule {
     constructor() {
@@ -22,13 +22,14 @@ export class SalesModule {
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => { this.currentPage = 1; this.loadSales(); }, 300);
         });
-        ['filter-sale-status','filter-sale-from','filter-sale-to'].forEach(id =>
+        ['filter-sale-status', 'filter-sale-from', 'filter-sale-to'].forEach(id =>
             document.getElementById(id)?.addEventListener('change', () => { this.currentPage = 1; this.loadSales(); })
         );
         document.getElementById('btn-clear-sale-filters')?.addEventListener('click', () => {
-            ['sale-search','filter-sale-status','filter-sale-from','filter-sale-to']
+            ['sale-search', 'filter-sale-status', 'filter-sale-from', 'filter-sale-to']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-            this.currentPage = 1; this.loadSales();
+            this.currentPage = 1;
+            this.loadSales();
         });
         document.getElementById('btn-new-sale')?.addEventListener('click', () => this.showModal());
         document.getElementById('btn-save-sale')?.addEventListener('click', () => this.save());
@@ -109,9 +110,9 @@ export class SalesModule {
         tbody.innerHTML = sales.map(s => {
             const cust = s.customer ? ((s.customer.first_name ?? '') + ' ' + (s.customer.last_name ?? '')).trim() : 'Walk-in';
             const eb = canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="' + s.id + '"><i class="fas fa-pencil-alt"></i></button>' : '';
-            const db = canDel  ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + s.id + '" data-ref="' + this.esc(s.reference_number ?? s.id) + '"><i class="fas fa-trash"></i></button>' : '';
+            const db = canDel  ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + s.id + '" data-ref="' + this.esc(s.invoice_number ?? s.id) + '"><i class="fas fa-trash"></i></button>' : '';
             return '<tr>' +
-                '<td><button class="btn btn-link btn-sm p-0" data-action="view" data-id="' + s.id + '">' + this.esc(s.reference_number ?? '#' + s.id) + '</button></td>' +
+                '<td><button class="btn btn-link btn-sm p-0" data-action="view" data-id="' + s.id + '">' + this.esc(s.invoice_number ?? '#' + s.id) + '</button></td>' +
                 '<td>' + this.esc(cust) + '</td>' +
                 '<td>' + (s.sale_date ?? (s.created_at ?? '').split('T')[0] ?? '---') + '</td>' +
                 '<td class="text-end">' + window.formatKES(s.total_amount ?? 0) + '</td>' +
@@ -133,7 +134,9 @@ export class SalesModule {
             h += '<li class="page-item ' + (i === p.current_page ? 'active' : '') + '"><button class="page-link" data-page="' + i + '">' + i + '</button></li>';
         h += '</ul></nav>';
         ctrl.innerHTML = h;
-        ctrl.querySelectorAll('[data-page]').forEach(b => b.addEventListener('click', () => { this.currentPage = +b.dataset.page; this.loadSales(); }));
+        ctrl.querySelectorAll('[data-page]').forEach(b =>
+            b.addEventListener('click', () => { this.currentPage = +b.dataset.page; this.loadSales(); })
+        );
     }
 
     async showModal(sale = null) {
@@ -164,11 +167,11 @@ export class SalesModule {
 
     async viewSale(id) {
         try {
-            const res  = await apiClient.get('/sales/' + id);
-            const s    = res.data?.data;
+            const res = await apiClient.get('/sales/' + id);
+            const s   = res.data?.data;
             document.getElementById('saleForm').classList.add('d-none');
             document.getElementById('btn-save-sale').classList.add('d-none');
-            const vb   = document.getElementById('sale-view-body');
+            const vb  = document.getElementById('sale-view-body');
             vb.classList.remove('d-none');
             const cust = s.customer ? ((s.customer.first_name ?? '') + ' ' + (s.customer.last_name ?? '')).trim() : 'Walk-in';
             const rows = (s.items ?? []).map(i =>
@@ -181,7 +184,7 @@ export class SalesModule {
             ).join('');
             vb.innerHTML =
                 '<div class="row g-3 mb-3">' +
-                '<div class="col-md-3"><strong>Invoice:</strong><br>' + this.esc(s.reference_number ?? '#' + s.id) + '</div>' +
+                '<div class="col-md-3"><strong>Invoice:</strong><br>' + this.esc(s.invoice_number ?? '#' + s.id) + '</div>' +
                 '<div class="col-md-3"><strong>Customer:</strong><br>' + this.esc(cust) + '</div>' +
                 '<div class="col-md-3"><strong>Date:</strong><br>' + (s.sale_date ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-' + (s.status === 'completed' ? 'success' : s.status === 'cancelled' ? 'danger' : 'warning') + '">' + s.status + '</span></div>' +
@@ -193,7 +196,7 @@ export class SalesModule {
                 '<tbody>' + rows + '</tbody>' +
                 '<tfoot><tr><td colspan="3" class="text-end fw-bold">Total:</td><td class="text-end fw-bold">' + window.formatKES(s.total_amount ?? 0) + '</td></tr></tfoot>' +
                 '</table>';
-            document.getElementById('saleModalLabel').textContent = 'Sale ' + (s.reference_number ?? '#' + s.id);
+            document.getElementById('saleModalLabel').textContent = 'Sale ' + (s.invoice_number ?? '#' + s.id);
             new bootstrap.Modal(document.getElementById('saleModal')).show();
         } catch {
             window.utils?.showToast('Failed to load sale.', 'error');
@@ -242,7 +245,9 @@ export class SalesModule {
 
     recalcTotal() {
         let t = 0;
-        document.querySelectorAll('#sale-items-body .item-subtotal').forEach(el => { t += parseFloat(el.textContent ?? 0); });
+        document.querySelectorAll('#sale-items-body .item-subtotal').forEach(el => {
+            t += parseFloat(el.textContent ?? 0);
+        });
         const el = document.getElementById('sale-total');
         if (el) el.textContent = window.formatKES(t);
     }
@@ -250,9 +255,8 @@ export class SalesModule {
     async save() {
         const form = document.getElementById('saleForm');
         const btn  = document.getElementById('btn-save-sale');
-        if (!btn) { console.error('btn-save-sale not found'); return; }
+        if (!btn) return;
         const spin = btn.querySelector('.spinner-border');
-        if (!spin) { console.error('spinner not found in btn-save-sale'); }
         window.utils?.clearValidationErrors(form);
         const items = [];
         document.querySelectorAll('#sale-items-body tr').forEach(row => {
@@ -265,7 +269,6 @@ export class SalesModule {
             window.utils?.showToast('Please add at least one product.', 'error');
             return;
         }
-
         const payload = {
             customer_id:    document.getElementById('sale-customer').value || null,
             sale_date:      document.getElementById('sale-date').value,
@@ -275,7 +278,7 @@ export class SalesModule {
             items,
         };
         btn.disabled = true;
-        spin.classList.remove('d-none');
+        if (spin) spin.classList.remove('d-none');
         try {
             if (this.editingId) {
                 await apiClient.put('/sales/' + this.editingId, payload);
@@ -287,13 +290,14 @@ export class SalesModule {
             bootstrap.Modal.getInstance(document.getElementById('saleModal'))?.hide();
             this.loadSales();
         } catch (err) {
-            if (err.response?.status === 422)
+            if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
-            else
+            } else {
                 window.utils?.showToast(err.response?.data?.message ?? 'Failed to save sale.', 'error');
+            }
         } finally {
             btn.disabled = false;
-            spin.classList.add('d-none');
+            if (spin) spin.classList.add('d-none');
         }
     }
 
