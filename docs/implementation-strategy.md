@@ -12,7 +12,29 @@
 
 The FRACA SERVCOM Inventory Management System is a web-based application designed to manage products, stock levels, sales, purchases, suppliers, customers, and reporting for a small-to-medium business. The system enforces role-based access control (RBAC) across three user tiers: Admin, Manager, and Staff.
 
-### 1.1 Goals
+### 1.1 System Credentials
+
+| Item | Value |
+|------|-------|
+| Application URL | http://localhost:8000 |
+| App Name | FRACA SERVCOM Inventory Management System |
+| Database | MySQL — `fraca_inventory` |
+| DB Host | 127.0.0.1 |
+| DB Port | 3306 |
+| DB Username | root |
+| DB Password | *(empty — default XAMPP/local)* |
+
+**Seeded user accounts** (created by `php artisan migrate --seed`):
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@inventory.com | password123 | Admin |
+| manager@inventory.com | password123 | Manager |
+| staff@inventory.com | password123 | Staff |
+
+---
+
+### 1.2 Goals
 
 - Provide a single-page-like experience using AJAX-driven modals without full page reloads
 - Enforce granular permission checks at both the API and UI layers
@@ -319,8 +341,21 @@ npm install
 cp .env.example .env
 php artisan key:generate
 
-# Database
+# Configure .env for MySQL (update these values):
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=fraca_inventory
+# DB_USERNAME=root
+# DB_PASSWORD=          ← leave empty for default XAMPP/local setup
+
+# Database — create the DB first, then migrate and seed
 php artisan migrate --seed
+
+# Default seeded accounts:
+#   admin@inventory.com    / password123  (Admin)
+#   manager@inventory.com  / password123  (Manager)
+#   staff@inventory.com    / password123  (Staff)
 
 # Start servers
 php artisan serve          # Backend: http://localhost:8000

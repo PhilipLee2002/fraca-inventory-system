@@ -43,13 +43,26 @@ Testing covers:
 | HTTP Testing | Laravel `TestCase`, `actingAs()`, `getJson()`, `postJson()` |
 | CI/CD | GitHub Actions (`.github/workflows/test-and-newman.yml`) |
 
-### 2.1 Test Users (Seeded)
+### 2.1 Application Access
 
-| Email | Password | Role |
-|-------|----------|------|
-| admin@inventory.com | password123 | Admin |
-| manager@inventory.com | password123 | Manager |
-| staff@inventory.com | password123 | Staff |
+| Item | Value |
+|------|-------|
+| Local URL | http://localhost:8000 |
+| App Name | FRACA SERVCOM Inventory Management System |
+| Database | MySQL — `fraca_inventory` |
+| DB Host | 127.0.0.1:3306 |
+| DB Username | root (default XAMPP/local) |
+| DB Password | *(empty by default)* |
+
+### 2.2 Test Users (Seeded)
+
+Run `php artisan migrate --seed` or `php artisan db:seed` to create these accounts:
+
+| Email | Password | Role | Access Level |
+|-------|----------|------|--------------|
+| admin@inventory.com | password123 | Admin | Full access — all CRUD, user management, hard deletes |
+| manager@inventory.com | password123 | Manager | Full access except hard deletes; deletes require admin verification |
+| staff@inventory.com | password123 | Staff | View only + create sales and purchases |
 
 ---
 
