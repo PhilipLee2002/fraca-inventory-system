@@ -37,54 +37,24 @@ class GenerateStockAlerts extends Command
             ->get();
 
         foreach ($lowStockProducts as $product) {
-            Alert::firstOrCreate([
-                'product_id' => $product->id,
-                'alert_type' => 'low_stock',
-                'resolved' => false
-            ], [
-                'message' => "Low stock alert: {$product->name} is below reorder level. Current: {$product->current_stock}, Reorder: {$product->reorder_level}",
-                'priority' => 'medium',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            Alert::firstOrCreate(
+                ['product_id' => $product->id, 'type' => 'low_stock', 'is_read' => false],
+                ['message' => "Low stock: {$product->name} has {$product->current_stock} units (reorder level: {$product->reorder_level})"]
+            );
         }
 
         // 2. Check for out of stock
         $outOfStockProducts = Product::where('current_stock', 0)->get();
 
         foreach ($outOfStockProducts as $product) {
-            Alert::firstOrCreate([
-                'product_id' => $product->id,
-                'alert_type' => 'out_of_stock',
-                'resolved' => false
-            ], [
-                'message' => "Out of stock: {$product->name} has 0 units in stock",
-                'priority' => 'high',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            Alert::firstOrCreate(
+                ['product_id' => $product->id, 'type' => 'out_of_stock', 'is_read' => false],
+                ['message' => "Out of stock: {$product->name} has 0 units remaining"]
+            );
         }
 
         // 3. Check for products that will expire soon (if you have expiry_date field)
-        if (\Schema::hasColumn('products', 'expiry_date')) {
-            $expiringSoon = Product::where('expiry_date', '>=', now())
-                ->where('expiry_date', '<=', now()->addDays(7))
-                ->where('current_stock', '>', 0)
-                ->get();
-
-            foreach ($expiringSoon as $product) {
-                Alert::firstOrCreate([
-                    'product_id' => $product->id,
-                    'alert_type' => 'expiring_soon',
-                    'resolved' => false
-                ], [
-                    'message' => "Product expiring soon: {$product->name} (Expires: {$product->expiry_date->format('Y-m-d')})",
-                    'priority' => 'high',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-        }
+        // Not implemented — products table has no expiry_date column
 
         $this->info('Alerts generated successfully.');
         

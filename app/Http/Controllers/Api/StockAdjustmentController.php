@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\StockAdjustmentRequest;
 use App\Models\Product;
 use App\Models\StockHistory;
+use App\Models\Alert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,13 @@ class StockAdjustmentController extends BaseController
             DB::commit();
 
             $product->load('category', 'supplier');
+
+            // Real-time stock alert after adjustment
+            if ($product->current_stock === 0) {
+                Alert::createForProduct($product, 'out_of_stock');
+            } elseif ($product->current_stock <= $product->reorder_level) {
+                Alert::createForProduct($product, 'low_stock');
+            }
 
             return $this->sendCreated([
                 'product'         => $product,

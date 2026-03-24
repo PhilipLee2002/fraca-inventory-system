@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\StockHistory;
+use App\Models\Alert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -108,6 +109,7 @@ class SaleController extends BaseController
                 $product = Product::find($item['product_id']);
                 $previousStock = $product->current_stock;
                 $product->decrement('current_stock', $item['quantity']);
+                $product->refresh();
 
                 // Create stock history record
                 StockHistory::create([
@@ -120,6 +122,13 @@ class SaleController extends BaseController
                     'reference_type'    => Sale::class,
                     'notes'             => "Sale: {$sale->invoice_number}",
                 ]);
+
+                // Real-time stock alert
+                if ($product->current_stock === 0) {
+                    Alert::createForProduct($product, 'out_of_stock');
+                } elseif ($product->current_stock <= $product->reorder_level) {
+                    Alert::createForProduct($product, 'low_stock');
+                }
             }
 
             DB::commit();
