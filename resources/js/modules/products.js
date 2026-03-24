@@ -274,8 +274,9 @@ export class ProductsModule {
         } catch (err) {
             if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
+            } else {
+                window.utils?.showToast(err.response?.data?.message ?? 'Failed to save product.', 'error');
             }
-            // other errors handled by interceptor
         } finally {
             btn.disabled = false;
             spinner.classList.add('d-none');

@@ -16,7 +16,7 @@ class CustomerController extends BaseController
     public function index(Request $request)
     {
         try {
-            $query = Customer::query();
+            $query = Customer::withCount('sales');
 
             // Apply filters
             if ($request->has('is_active')) {

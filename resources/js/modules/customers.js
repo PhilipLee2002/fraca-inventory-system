@@ -29,6 +29,10 @@ export class CustomersModule {
             if (edit) this.edit(edit.dataset.id);
             if (del)  this.remove(del.dataset.id, del.dataset.name);
         });
+        // Clean up modal state on hide
+        document.getElementById('customerModal')?.addEventListener('hidden.bs.modal', () => {
+            this.editingId = null;
+        });
     }
 
     async loadCustomers() {
@@ -46,35 +50,35 @@ export class CustomersModule {
             this.renderTable(customers);
             this.renderPagination(pagination);
         } catch {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Failed to load customers.</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load customers.</td></tr>';
         }
     }
 
     renderTable(customers) {
         const tbody = document.getElementById('customers-tbody');
-        const canEdit   = window.utils?.hasAnyPermission(['edit-customer', 'create-customer']);
-        const canDelete = window.utils?.hasAnyPermission(['delete-customer', 'create-customer']);
+        const canEdit   = window.utils?.hasAnyPermission(['edit-customer']);
+        const canDelete = window.utils?.hasAnyPermission(['delete-customer']);
 
         if (!customers.length) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No customers found.</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No customers found.</td></tr>';
             return;
         }
 
         tbody.innerHTML = customers.map(c => {
-            const fullName = `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim();
+            const fullName = ((c.first_name ?? '') + ' ' + (c.last_name ?? '')).trim();
             const editBtn = canEdit
-                ? `<button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${c.id}">
-                       <i class="fas fa-pencil-alt"></i></button>` : '';
+                ? '<button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="' + c.id + '"><i class="fas fa-pencil-alt"></i></button>'
+                : '';
             const delBtn = canDelete
-                ? `<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${c.id}"
-                       data-name="${this.esc(fullName)}"><i class="fas fa-trash"></i></button>` : '';
-            return `<tr>
-                <td>${this.esc(fullName)}</td>
-                <td>${this.esc(c.email ?? '—')}</td>
-                <td>${this.esc(c.phone ?? '—')}</td>
-                <td class="text-center">${c.sales_count ?? 0}</td>
-                <td class="text-end">${editBtn}${delBtn}</td>
-            </tr>`;
+                ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + c.id + '" data-name="' + this.esc(fullName) + '"><i class="fas fa-trash"></i></button>'
+                : '';
+            return '<tr>' +
+                '<td>' + this.esc(fullName) + '</td>' +
+                '<td>' + this.esc(c.email ?? '\u2014') + '</td>' +
+                '<td>' + this.esc(c.phone ?? '\u2014') + '</td>' +
+                '<td class="text-center">' + (c.sales_count ?? 0) + '</td>' +
+                '<td class="text-end">' + editBtn + delBtn + '</td>' +
+                '</tr>';
         }).join('');
     }
 
@@ -83,12 +87,12 @@ export class CustomersModule {
         const info = document.getElementById('customers-pagination-info');
         const ctrl = document.getElementById('customers-pagination-controls');
         if (!wrap || !pagination) return;
-        info.textContent = `Showing ${pagination.from ?? 0}–${pagination.to ?? 0} of ${pagination.total}`;
+        if (info) info.textContent = 'Showing ' + (pagination.from ?? 0) + '\u2013' + (pagination.to ?? 0) + ' of ' + pagination.total;
+        if (!ctrl) return;
         if (pagination.last_page <= 1) { ctrl.innerHTML = ''; return; }
         let html = '<nav><ul class="pagination pagination-sm mb-0">';
         for (let i = 1; i <= pagination.last_page; i++) {
-            html += `<li class="page-item ${i === pagination.current_page ? 'active' : ''}">
-                <button class="page-link" data-page="${i}">${i}</button></li>`;
+            html += '<li class="page-item ' + (i === pagination.current_page ? 'active' : '') + '"><button class="page-link" data-page="' + i + '">' + i + '</button></li>';
         }
         html += '</ul></nav>';
         ctrl.innerHTML = html;
@@ -111,12 +115,12 @@ export class CustomersModule {
             document.getElementById('customer-phone').value      = customer.phone ?? '';
             document.getElementById('customer-address').value    = customer.address ?? '';
         }
-        new bootstrap.Modal(document.getElementById('customerModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('customerModal')).show();
     }
 
     async edit(id) {
         try {
-            const res = await apiClient.get(`/customers/${id}`);
+            const res = await apiClient.get('/customers/' + id);
             this.showModal(res.data?.data);
         } catch {
             window.utils?.showToast('Failed to load customer.', 'error');
@@ -126,27 +130,33 @@ export class CustomersModule {
     async save() {
         const form = document.getElementById('customerForm');
         const btn  = document.getElementById('btn-save-customer');
-        const spin = btn.querySelector('.spinner-border');
+        const spin = btn?.querySelector('.spinner-border');
         window.utils?.clearValidationErrors(form);
 
         const payload = {
             first_name: document.getElementById('customer-first-name').value.trim(),
-            last_name:  document.getElementById('customer-last-name').value.trim(),
+            last_name:  document.getElementById('customer-last-name').value.trim() || null,
             email:      document.getElementById('customer-email').value.trim() || null,
             phone:      document.getElementById('customer-phone').value.trim() || null,
             address:    document.getElementById('customer-address').value.trim() || null,
         };
 
-        btn.disabled = true; spin.classList.remove('d-none');
+        if (!payload.first_name) {
+            window.utils?.showToast('First name is required.', 'error');
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+        if (spin) spin.classList.remove('d-none');
         try {
             if (this.editingId) {
-                await apiClient.put(`/customers/${this.editingId}`, payload);
+                await apiClient.put('/customers/' + this.editingId, payload);
                 window.utils?.showToast('Customer updated.', 'success');
             } else {
                 await apiClient.post('/customers', payload);
                 window.utils?.showToast('Customer created.', 'success');
             }
-            bootstrap.Modal.getInstance(document.getElementById('customerModal'))?.hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('customerModal')).hide();
             this.loadCustomers();
         } catch (err) {
             if (err.response?.status === 422) {
@@ -155,7 +165,8 @@ export class CustomersModule {
                 window.utils?.showToast(err.response?.data?.message ?? 'Failed to save customer.', 'error');
             }
         } finally {
-            btn.disabled = false; spin.classList.add('d-none');
+            if (btn) btn.disabled = false;
+            if (spin) spin.classList.add('d-none');
         }
     }
 
@@ -171,14 +182,14 @@ export class CustomersModule {
             } catch {}
         } else {
             const ok = await window.utils?.showConfirmModal('Delete Customer',
-                `Delete <strong>${this.esc(name)}</strong>?`, 'Delete', 'btn-danger');
+                'Delete <strong>' + this.esc(name) + '</strong>?', 'Delete', 'btn-danger');
             if (ok) await this.doDelete(id);
         }
     }
 
     async doDelete(id) {
         try {
-            await apiClient.delete(`/customers/${id}`);
+            await apiClient.delete('/customers/' + id);
             window.utils?.showToast('Customer deleted.', 'success');
             this.loadCustomers();
         } catch (err) {

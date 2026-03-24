@@ -1,4 +1,4 @@
-﻿import apiClient from '../api/client.js';
+import apiClient from '../api/client.js';
 
 export class PurchasesModule {
     constructor() {
@@ -48,6 +48,10 @@ export class PurchasesModule {
         document.getElementById('purchase-items-body')?.addEventListener('click', e => {
             const rm = e.target.closest('.btn-remove-row');
             if (rm) { rm.closest('tr').remove(); this.recalcTotal(); }
+        });
+        // Clean up modal state on hide so re-open works cleanly
+        document.getElementById('purchaseModal')?.addEventListener('hidden.bs.modal', () => {
+            this.editingId = null;
         });
     }
 
@@ -138,6 +142,7 @@ export class PurchasesModule {
     async showModal(purchase = null) {
         if (!this.products.length) await this.loadProducts();
         this.editingId = purchase?.id ?? null;
+        const modalEl = document.getElementById('purchaseModal');
         const form = document.getElementById('purchaseForm');
         const vb   = document.getElementById('purchase-view-body');
         const sb   = document.getElementById('btn-save-purchase');
@@ -158,13 +163,14 @@ export class PurchasesModule {
         if (purchase?.items?.length) purchase.items.forEach(i => this.addItemRow(i));
         else this.addItemRow();
         this.recalcTotal();
-        new bootstrap.Modal(document.getElementById('purchaseModal')).show();
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 
     async viewPurchase(id) {
         try {
             const res = await apiClient.get('/purchases/' + id);
             const p   = res.data?.data;
+            const modalEl = document.getElementById('purchaseModal');
             document.getElementById('purchaseForm').classList.add('d-none');
             document.getElementById('btn-save-purchase').classList.add('d-none');
             const vb  = document.getElementById('purchase-view-body');
@@ -192,7 +198,7 @@ export class PurchasesModule {
                 '<tfoot><tr><td colspan="3" class="text-end fw-bold">Total:</td><td class="text-end fw-bold">' + window.formatKES(p.total_amount ?? 0) + '</td></tr></tfoot>' +
                 '</table>';
             document.getElementById('purchaseModalLabel').textContent = 'Purchase ' + (p.purchase_number ?? '#' + p.id);
-            new bootstrap.Modal(document.getElementById('purchaseModal')).show();
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
         } catch {
             window.utils?.showToast('Failed to load purchase.', 'error');
         }
@@ -201,7 +207,7 @@ export class PurchasesModule {
     async editPurchase(id) {
         try {
             const res = await apiClient.get('/purchases/' + id);
-            this.showModal(res.data?.data);
+            await this.showModal(res.data?.data);
         } catch {
             window.utils?.showToast('Failed to load purchase.', 'error');
         }
@@ -251,7 +257,7 @@ export class PurchasesModule {
             const pid = row.querySelector('.item-product')?.value;
             const qty = parseFloat(row.querySelector('.item-qty')?.value ?? 0);
             const pr  = parseFloat(row.querySelector('.item-price')?.value ?? 0);
-            if (pid) items.push({ product_id: parseInt(pid), quantity: parseInt(qty), unit_price: parseFloat(pr) });
+            if (pid) items.push({ product_id: parseInt(pid), quantity: qty, unit_price: pr });
         });
         if (!items.length) {
             window.utils?.showToast('Please add at least one product.', 'error');
@@ -275,7 +281,7 @@ export class PurchasesModule {
                 await apiClient.post('/purchases', payload);
                 window.utils?.showToast('Purchase created.', 'success');
             }
-            bootstrap.Modal.getInstance(document.getElementById('purchaseModal'))?.hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('purchaseModal')).hide();
             this.loadPurchases();
         } catch (err) {
             if (err.response?.status === 422) {
