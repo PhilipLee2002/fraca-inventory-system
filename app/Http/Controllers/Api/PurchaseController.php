@@ -124,6 +124,82 @@ class PurchaseController extends BaseController
     }
 
     /**
+     * Update an existing purchase (replaces items, recalculates total, adjusts stock).
+     */
+    public function update(Request $request, Purchase $purchase)
+    {
+        try {
+            $request->validate([
+                'supplier_id'        => 'nullable|exists:suppliers,id',
+                'purchase_date'      => 'required|date',
+                'payment_method'     => 'nullable|in:cash,card,transfer',
+                'status'             => 'required|in:pending,received,partially_received,cancelled',
+                'notes'              => 'nullable|string',
+                'items'              => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity'   => 'required|numeric|min:1',
+                'items.*.unit_price' => 'required|numeric|min:0',
+            ]);
+
+            DB::beginTransaction();
+
+            // Reverse stock for old items
+            foreach ($purchase->items as $oldItem) {
+                $oldItem->product->decrement('current_stock', $oldItem->quantity);
+            }
+            $purchase->items()->delete();
+
+            $items = $request->input('items');
+            $totalAmount = 0;
+
+            foreach ($items as $item) {
+                $totalAmount += $item['quantity'] * $item['unit_price'];
+
+                PurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'product_id'  => $item['product_id'],
+                    'quantity'    => $item['quantity'],
+                    'unit_price'  => $item['unit_price'],
+                    'total'       => $item['quantity'] * $item['unit_price'],
+                ]);
+
+                $product = Product::find($item['product_id']);
+                $previousStock = $product->current_stock;
+                $product->increment('current_stock', $item['quantity']);
+
+                StockHistory::create([
+                    'product_id'        => $item['product_id'],
+                    'quantity_change'   => $item['quantity'],
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock + $item['quantity'],
+                    'transaction_type'  => 'purchase',
+                    'reference_id'      => $purchase->id,
+                    'reference_type'    => Purchase::class,
+                    'notes'             => "Purchase updated: {$purchase->purchase_number}",
+                ]);
+            }
+
+            $purchase->update([
+                'supplier_id'    => $request->input('supplier_id') ?: null,
+                'purchase_date'  => $request->input('purchase_date'),
+                'payment_method' => $request->input('payment_method', 'cash'),
+                'status'         => $request->input('status'),
+                'notes'          => $request->input('notes'),
+                'total_amount'   => $totalAmount,
+            ]);
+
+            DB::commit();
+
+            $purchase->load(['supplier', 'items.product']);
+            return $this->sendUpdated($purchase, 'Purchase updated successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Error updating purchase: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Display the specified purchase.
      */
     public function show(Purchase $purchase)

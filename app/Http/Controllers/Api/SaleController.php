@@ -10,7 +10,6 @@ use App\Models\StockHistory;
 use App\Models\Alert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
 class SaleController extends BaseController
 {
     /**
@@ -140,6 +139,97 @@ class SaleController extends BaseController
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError('Error creating sale: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update an existing sale (replaces items, recalculates total, adjusts stock).
+     */
+    public function update(Request $request, Sale $sale)
+    {
+        try {
+            $request->validate([
+                'customer_id'        => 'nullable|exists:customers,id',
+                'sale_date'          => 'required|date',
+                'payment_method'     => 'nullable|in:cash,card,transfer',
+                'status'             => 'required|in:pending,completed,cancelled',
+                'notes'              => 'nullable|string',
+                'items'              => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity'   => 'required|numeric|min:1',
+                'items.*.unit_price' => 'required|numeric|min:0',
+            ]);
+
+            DB::beginTransaction();
+
+            // Reverse stock for old items
+            foreach ($sale->items as $oldItem) {
+                $oldItem->product->increment('current_stock', $oldItem->quantity);
+            }
+            $sale->items()->delete();
+
+            $items = $request->input('items');
+
+            // Check stock for new items
+            foreach ($items as $item) {
+                $product = Product::find($item['product_id']);
+                if (!$product || $product->current_stock < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for: " . ($product->name ?? 'Unknown'));
+                }
+            }
+
+            $totalAmount = 0;
+            foreach ($items as $item) {
+                $totalAmount += $item['quantity'] * $item['unit_price'];
+
+                SaleItem::create([
+                    'sale_id'    => $sale->id,
+                    'product_id' => $item['product_id'],
+                    'quantity'   => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total'      => $item['quantity'] * $item['unit_price'],
+                ]);
+
+                $product = Product::find($item['product_id']);
+                $previousStock = $product->current_stock;
+                $product->decrement('current_stock', $item['quantity']);
+                $product->refresh();
+
+                StockHistory::create([
+                    'product_id'        => $item['product_id'],
+                    'quantity_change'   => -$item['quantity'],
+                    'previous_quantity' => $previousStock,
+                    'new_quantity'      => $previousStock - $item['quantity'],
+                    'transaction_type'  => 'sale',
+                    'reference_id'      => $sale->id,
+                    'reference_type'    => Sale::class,
+                    'notes'             => "Sale updated: {$sale->invoice_number}",
+                ]);
+
+                if ($product->current_stock === 0) {
+                    Alert::createForProduct($product, 'out_of_stock');
+                } elseif ($product->current_stock <= $product->reorder_level) {
+                    Alert::createForProduct($product, 'low_stock');
+                }
+            }
+
+            $sale->update([
+                'customer_id'    => $request->input('customer_id') ?: null,
+                'sale_date'      => $request->input('sale_date'),
+                'payment_method' => $request->input('payment_method', 'cash'),
+                'status'         => $request->input('status'),
+                'notes'          => $request->input('notes'),
+                'total_amount'   => $totalAmount,
+            ]);
+
+            DB::commit();
+
+            $sale->load(['customer', 'items.product']);
+            return $this->sendUpdated($sale, 'Sale updated successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Error updating sale: ' . $e->getMessage());
         }
     }
 

@@ -29,13 +29,15 @@ Route::middleware('auth')->group(function () {
 
     // ── Purchases ──
     Route::apiResource('purchases', PurchaseController::class)->except(['update', 'destroy']);
+    Route::put('/purchases/{purchase}',        [PurchaseController::class, 'update']);
     Route::put('/purchases/{purchase}/status', [PurchaseController::class, 'updateStatus']);
-    Route::delete('/purchases/{purchase}', [PurchaseController::class, 'destroy']);
+    Route::delete('/purchases/{purchase}',     [PurchaseController::class, 'destroy']);
 
     // ── Sales ──
     Route::apiResource('sales', SaleController::class)->except(['update', 'destroy']);
+    Route::put('/sales/{sale}',        [SaleController::class, 'update']);
     Route::put('/sales/{sale}/status', [SaleController::class, 'updateStatus']);
-    Route::delete('/sales/{sale}', [SaleController::class, 'destroy']);
+    Route::delete('/sales/{sale}',     [SaleController::class, 'destroy']);
 
     // ── Stock adjustments ──
     Route::get('/stock-adjustments',  [StockAdjustmentController::class, 'index']);
