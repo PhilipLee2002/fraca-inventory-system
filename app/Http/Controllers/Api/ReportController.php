@@ -325,12 +325,11 @@ class ReportController extends BaseController
             $pendingSales = Sale::where('status', 'pending')->count();
             $pendingPurchases = Purchase::where('status', 'pending')->count();
 
-            // Recent alerts
-            $recentAlerts = Alert::where('is_read', false)
-                ->with('product')
-                ->latest()
-                ->limit(10)
-                ->get();
+            // Active alerts — count directly from products for accuracy
+            $activeAlertsCount = Product::where(function ($q) {
+                $q->where('current_stock', 0)
+                  ->orWhereColumn('current_stock', '<=', 'reorder_level');
+            })->count();
 
             // Top performers (top 5 users by completed sales this month)
             $topPerformers = \App\Models\User::select('users.id', 'users.name')
@@ -375,7 +374,7 @@ class ReportController extends BaseController
                     'total_customers'      => Customer::count(),
                     'total_suppliers'      => Supplier::count(),
                     'total_users'          => \App\Models\User::count(),
-                    'active_alerts'        => $recentAlerts->count(),
+                    'active_alerts'        => $activeAlertsCount,
                     'pending_sales'        => $pendingSales,
                     'pending_purchases'    => $pendingPurchases,
                     'recent_adjustments'   => $recentAdjustments,
@@ -385,7 +384,6 @@ class ReportController extends BaseController
                     'monthly_profit'       => round($monthlyProfit, 2),
                 ],
                 'top_performers' => $topPerformers,
-                'recent_alerts'  => $recentAlerts,
             ], 'Dashboard statistics retrieved successfully');
 
         } catch (\Exception $e) {
@@ -476,11 +474,28 @@ class ReportController extends BaseController
     }
 
     /**
-     * Active alerts (unresolved low-stock alerts)
+     * Active alerts — reads from alerts table, but falls back to live product
+     * stock check so the widget is always accurate even if no alert records exist.
      */
     public function alerts()
     {
         try {
+            // First, sync any currently low/out-of-stock products that have no alert yet
+            $lowStockProducts = Product::where('current_stock', '>', 0)
+                ->whereColumn('current_stock', '<=', 'reorder_level')
+                ->get();
+
+            foreach ($lowStockProducts as $product) {
+                Alert::createForProduct($product, 'low_stock');
+            }
+
+            $outOfStockProducts = Product::where('current_stock', 0)->get();
+
+            foreach ($outOfStockProducts as $product) {
+                Alert::createForProduct($product, 'out_of_stock');
+            }
+
+            // Now fetch all unread alerts
             $alerts = Alert::where('is_read', false)
                 ->with('product:id,name,current_stock,reorder_level')
                 ->latest()
@@ -488,8 +503,8 @@ class ReportController extends BaseController
                 ->map(function ($alert) {
                     return [
                         'id'            => $alert->id,
-                        'type'          => $alert->type ?? 'low_stock',
-                        'message'       => $alert->message ?? "Low stock: {$alert->product?->name}",
+                        'type'          => $alert->type,
+                        'message'       => $alert->message,
                         'product_name'  => $alert->product?->name,
                         'current_stock' => $alert->product?->current_stock,
                         'reorder_level' => $alert->product?->reorder_level,
