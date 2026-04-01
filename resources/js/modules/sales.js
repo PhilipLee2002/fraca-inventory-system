@@ -194,7 +194,7 @@ export class SalesModule {
                 '<div class="col-md-3"><strong>Customer:</strong><br>' + this.esc(cust) + '</div>' +
                 '<div class="col-md-3"><strong>Date:</strong><br>' + (s.sale_date ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-' + (s.status === 'completed' ? 'success' : s.status === 'cancelled' ? 'danger' : 'warning') + '">' + s.status + '</span></div>' +
-                '<div class="col-md-3"><strong>Payment:</strong><br>' + (s.payment_method ?? '---') + '</div>' +
+                '<div class="col-md-3"><strong>Payment:</strong><br>' + (s.payment_method === 'transfer' ? 'Mpesa' : (s.payment_method ?? '---')) + '</div>' +
                 '<div class="col-md-9"><strong>Notes:</strong><br>' + this.esc(s.notes ?? '---') + '</div>' +
                 '</div>' +
                 '<table class="table table-sm">' +

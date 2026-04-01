@@ -108,7 +108,7 @@
                             <select class="form-select" name="payment_method" id="purchase-payment-method">
                                 <option value="cash">Cash</option>
                                 <option value="card">Card</option>
-                                <option value="transfer">Transfer</option>
+                                <option value="transfer">Mpesa</option>
                                 <option value="credit">Credit</option>
                             </select>
                         </div>

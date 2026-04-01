@@ -189,7 +189,7 @@ export class PurchasesModule {
                 '<div class="col-md-3"><strong>Supplier:</strong><br>' + this.esc(p.supplier?.name ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Date:</strong><br>' + (p.purchase_date ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-' + (p.status === 'received' ? 'success' : p.status === 'cancelled' ? 'danger' : 'warning') + '">' + p.status + '</span></div>' +
-                '<div class="col-md-3"><strong>Payment:</strong><br>' + (p.payment_method ?? '---') + '</div>' +
+                '<div class="col-md-3"><strong>Payment:</strong><br>' + (p.payment_method === 'transfer' ? 'Mpesa' : (p.payment_method ?? '---')) + '</div>' +
                 '<div class="col-md-9"><strong>Notes:</strong><br>' + this.esc(p.notes ?? '---') + '</div>' +
                 '</div>' +
                 '<table class="table table-sm">' +
