@@ -145,7 +145,7 @@ export class UsersModule {
             pwdInput.required = true;
         }
 
-        new bootstrap.Modal(document.getElementById('userModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
     }
 
     async edit(id) {
@@ -186,6 +186,8 @@ export class UsersModule {
         } catch (err) {
             if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
+            } else {
+                window.utils?.showToast(err.response?.data?.message ?? 'Failed to save user.', 'error');
             }
         } finally {
             btn.disabled = false; spin.classList.add('d-none');

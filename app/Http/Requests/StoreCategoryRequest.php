@@ -8,7 +8,7 @@ class StoreCategoryRequest extends ApiRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Category::class);
+        return true; // Route middleware handles permission:create-category
     }
 
     /**

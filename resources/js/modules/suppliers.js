@@ -110,7 +110,7 @@ export class SuppliersModule {
             document.getElementById('supplier-phone').value   = supplier.phone ?? '';
             document.getElementById('supplier-address').value = supplier.address ?? '';
         }
-        new bootstrap.Modal(document.getElementById('supplierModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('supplierModal')).show();
     }
 
     async edit(id) {
@@ -150,6 +150,8 @@ export class SuppliersModule {
         } catch (err) {
             if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
+            } else {
+                window.utils?.showToast(err.response?.data?.message ?? 'Failed to save supplier.', 'error');
             }
         } finally {
             btn.disabled = false; spin.classList.add('d-none');

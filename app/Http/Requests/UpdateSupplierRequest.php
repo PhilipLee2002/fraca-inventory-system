@@ -11,30 +11,19 @@ class UpdateSupplierRequest extends ApiRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('supplier'));
+        return true; // Route middleware handles permission:edit-supplier
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $supplierId = $this->route('supplier')->id;
 
         return [
-            'name' => 'sometimes|required|string|max:255',
-            'contact_name' => 'nullable|string|max:255',
-            'email' => [
-                'sometimes',
-                'nullable',
-                'email',
-                'max:255',
-                Rule::unique('suppliers')->ignore($supplierId),
-            ],
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
+            'name'           => 'sometimes|required|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'email'          => ['sometimes', 'nullable', 'email', 'max:255', Rule::unique('suppliers')->ignore($supplierId)],
+            'phone'          => 'nullable|string|max:20',
+            'address'        => 'nullable|string',
         ];
     }
 }

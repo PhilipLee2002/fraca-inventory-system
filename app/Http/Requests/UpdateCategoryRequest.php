@@ -11,7 +11,7 @@ class UpdateCategoryRequest extends ApiRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('category'));
+        return true; // Route middleware handles permission:edit-category
     }
 
     /**
