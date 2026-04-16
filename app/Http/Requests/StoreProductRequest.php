@@ -15,7 +15,7 @@ class StoreProductRequest extends ApiRequest
     {
         return [
             'name'          => 'required|string|max:255|unique:products,name',
-            'sku'           => 'required|string|max:100|unique:products,sku',
+            'sku'           => 'nullable|string|max:100|unique:products,sku',
             'barcode'       => 'nullable|string|max:100|unique:products,barcode',
             'description'   => 'nullable|string',
             'category_id'   => 'required|exists:categories,id',

@@ -56,6 +56,25 @@ export class ProductsModule {
             this.saveProduct();
         });
 
+        // Auto-generate SKU from product name (new products only)
+        document.getElementById('product-name')?.addEventListener('input', () => {
+            if (this.editingId) return; // don't overwrite SKU when editing
+            const skuField = document.getElementById('product-sku');
+            if (skuField?.dataset.manuallyEdited === 'true') return;
+            const name = document.getElementById('product-name').value.trim();
+            if (!name) { skuField.value = ''; return; }
+            const prefix = this.generateSkuPrefix(name);
+            skuField.value = prefix + '-???';
+            clearTimeout(this.skuTimer);
+            this.skuTimer = setTimeout(() => this.resolveSkuSequence(prefix), 400);
+        });
+
+        // If user manually edits the SKU field, stop auto-generating
+        document.getElementById('product-sku')?.addEventListener('input', () => {
+            if (this.editingId) return;
+            document.getElementById('product-sku').dataset.manuallyEdited = 'true';
+        });
+
         // Table row actions (delegated)
         document.getElementById('products-tbody')?.addEventListener('click', (e) => {
             const editBtn = e.target.closest('[data-action="edit"]');
@@ -211,6 +230,12 @@ export class ProductsModule {
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
         modal.show();
 
+        // Reset SKU manual-edit flag for new products
+        if (!product) {
+            const skuField = document.getElementById('product-sku');
+            if (skuField) { skuField.value = ''; skuField.dataset.manuallyEdited = 'false'; }
+        }
+
         // Wait for filters (categories/suppliers) to be populated before setting values
         if (this.filtersPromise) await this.filtersPromise;
 
@@ -322,6 +347,38 @@ export class ProductsModule {
                     err.response?.data?.message ?? 'Failed to delete product.',
                     'error'
                 );
+            }
+        }
+    }
+
+    // ── SKU helpers ───────────────────────────────────────────────────────────
+
+    generateSkuPrefix(name) {
+        // Take first letter of each word, uppercase, max 4 chars
+        return name.trim().split(/\s+/)
+            .map(w => w[0]?.toUpperCase() ?? '')
+            .join('')
+            .slice(0, 4);
+    }
+
+    async resolveSkuSequence(prefix) {
+        const skuField = document.getElementById('product-sku');
+        if (!skuField || skuField.dataset.manuallyEdited === 'true') return;
+        try {
+            // Fetch products whose SKU starts with this prefix
+            const res = await apiClient.get('/products', { params: { search: prefix + '-', per_page: 500 } });
+            const existing = res.data?.data?.data ?? res.data?.data ?? [];
+            // Count how many already use this exact prefix pattern
+            const pattern = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d+$', 'i');
+            const count = existing.filter(p => pattern.test(p.sku)).length;
+            const seq = String(count + 1).padStart(3, '0');
+            // Only update if user hasn't typed in the field since
+            if (skuField.dataset.manuallyEdited !== 'true') {
+                skuField.value = prefix + '-' + seq;
+            }
+        } catch {
+            if (skuField.dataset.manuallyEdited !== 'true') {
+                skuField.value = prefix + '-001';
             }
         }
     }
