@@ -93,6 +93,15 @@
                         <option value="month" selected>Month</option>
                     </select>
                 </div>
+                <div class="col-md-3 d-none status-filter">
+                    <label class="form-label small">Status</label>
+                    <select class="form-select form-select-sm" id="filter-report-status">
+                        <option value="completed">Completed / Received</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="all">All Statuses</option>
+                    </select>
+                </div>
                 <div class="col-auto">
                     <button class="btn btn-action-primary btn-sm" id="btn-generate-report">
                         <span class="spinner-border spinner-border-sm d-none me-1" role="status"></span>

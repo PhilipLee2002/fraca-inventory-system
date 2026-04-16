@@ -21,36 +21,46 @@ class ReportController extends BaseController
     public function sales(Request $request)
     {
         try {
-            $query = Sale::with(['customer', 'items.product'])
-                ->where('status', 'completed');
+            $query = Sale::with(['customer', 'items.product']);
 
-            // Apply date filters
+            // Status filter — default to completed only, but allow 'all' or specific status
+            $statusFilter = $request->input('status', 'completed');
+            if ($statusFilter !== 'all') {
+                $query->where('status', $statusFilter);
+            }
+
+            // Payment status filter
+            if ($request->filled('payment_status')) {
+                $query->where('payment_status', $request->payment_status);
+            }
+
             if ($request->filled('start_date')) {
                 $query->where('sale_date', '>=', $request->start_date);
             }
             if ($request->filled('end_date')) {
                 $query->where('sale_date', '<=', $request->end_date);
             }
-
-            // Apply customer filter
             if ($request->filled('customer_id')) {
                 $query->where('customer_id', $request->customer_id);
             }
 
             $sales = $query->latest()->paginate($request->input('per_page', 50));
 
-            // Calculate totals
-            $totalSales = Sale::where('status', 'completed')
-                ->when($request->filled('start_date'), fn($q) => $q->where('sale_date', '>=', $request->start_date))
-                ->when($request->filled('end_date'), fn($q) => $q->where('sale_date', '<=', $request->end_date))
-                ->sum('total_amount');
+            // Summary — confirmed (completed) vs pending
+            $baseQuery = Sale::when($request->filled('start_date'), fn($q) => $q->where('sale_date', '>=', $request->start_date))
+                             ->when($request->filled('end_date'),   fn($q) => $q->where('sale_date', '<=', $request->end_date));
+
+            $confirmedRevenue = (clone $baseQuery)->where('status', 'completed')->sum('total_amount');
+            $pendingRevenue   = (clone $baseQuery)->where('status', 'pending')->sum('total_amount');
+            $totalTransactions = $sales->total();
 
             return $this->sendSuccess([
                 'sales' => $sales,
                 'summary' => [
-                    'total_sales' => round($totalSales, 2),
-                    'total_transactions' => $sales->total(),
-                    'average_sale_value' => $sales->total() > 0 ? round($totalSales / $sales->total(), 2) : 0,
+                    'total_sales'            => round($confirmedRevenue, 2),
+                    'pending_revenue'        => round($pendingRevenue, 2),
+                    'total_transactions'     => $totalTransactions,
+                    'average_sale_value'     => $totalTransactions > 0 ? round($confirmedRevenue / max($totalTransactions, 1), 2) : 0,
                 ]
             ], 'Sales report retrieved successfully');
 
@@ -65,36 +75,39 @@ class ReportController extends BaseController
     public function purchases(Request $request)
     {
         try {
-            $query = Purchase::with(['supplier', 'items.product'])
-                ->where('status', 'received');
+            $query = Purchase::with(['supplier', 'items.product']);
 
-            // Apply date filters
+            // Status filter — default to received, allow 'all' or specific status
+            $statusFilter = $request->input('status', 'received');
+            if ($statusFilter !== 'all') {
+                $query->where('status', $statusFilter);
+            }
+
             if ($request->filled('start_date')) {
                 $query->where('purchase_date', '>=', $request->start_date);
             }
             if ($request->filled('end_date')) {
                 $query->where('purchase_date', '<=', $request->end_date);
             }
-
-            // Apply supplier filter
             if ($request->filled('supplier_id')) {
                 $query->where('supplier_id', $request->supplier_id);
             }
 
             $purchases = $query->latest()->paginate($request->input('per_page', 50));
 
-            // Calculate totals
-            $totalPurchases = Purchase::where('status', 'received')
-                ->when($request->filled('start_date'), fn($q) => $q->where('purchase_date', '>=', $request->start_date))
-                ->when($request->filled('end_date'), fn($q) => $q->where('purchase_date', '<=', $request->end_date))
-                ->sum('total_amount');
+            $baseQuery = Purchase::when($request->filled('start_date'), fn($q) => $q->where('purchase_date', '>=', $request->start_date))
+                                 ->when($request->filled('end_date'),   fn($q) => $q->where('purchase_date', '<=', $request->end_date));
+
+            $confirmedCost  = (clone $baseQuery)->where('status', 'received')->sum('total_amount');
+            $pendingCost    = (clone $baseQuery)->where('status', 'pending')->sum('total_amount');
 
             return $this->sendSuccess([
                 'purchases' => $purchases,
                 'summary' => [
-                    'total_purchases' => round($totalPurchases, 2),
-                    'total_transactions' => $purchases->total(),
-                    'average_purchase_value' => $purchases->total() > 0 ? round($totalPurchases / $purchases->total(), 2) : 0,
+                    'total_purchases'          => round($confirmedCost, 2),
+                    'pending_purchases'        => round($pendingCost, 2),
+                    'total_transactions'       => $purchases->total(),
+                    'average_purchase_value'   => $purchases->total() > 0 ? round($confirmedCost / max($purchases->total(), 1), 2) : 0,
                 ]
             ], 'Purchase report retrieved successfully');
 

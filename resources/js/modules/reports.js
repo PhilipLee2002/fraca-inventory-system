@@ -77,6 +77,7 @@ export class ReportsModule {
         const showCustomer = ['sales'].includes(this.activeReport);
         const showProduct  = ['stock-movement'].includes(this.activeReport);
         const showGroupBy  = ['profit-loss'].includes(this.activeReport);
+        const showStatus   = ['sales', 'purchases'].includes(this.activeReport);
 
         document.querySelectorAll('.date-filter').forEach(el => el.classList.toggle('d-none', !showDate));
         document.querySelectorAll('.category-filter').forEach(el => el.classList.toggle('d-none', !showCategory));
@@ -84,6 +85,7 @@ export class ReportsModule {
         document.querySelectorAll('.customer-filter').forEach(el => el.classList.toggle('d-none', !showCustomer));
         document.querySelectorAll('.product-filter').forEach(el => el.classList.toggle('d-none', !showProduct));
         document.querySelectorAll('.groupby-filter').forEach(el => el.classList.toggle('d-none', !showGroupBy));
+        document.querySelectorAll('.status-filter').forEach(el => el.classList.toggle('d-none', !showStatus));
     }
 
     async generateReport() {
@@ -99,6 +101,7 @@ export class ReportsModule {
         const custId    = document.getElementById('filter-report-customer')?.value;
         const prodId    = document.getElementById('filter-report-product')?.value;
         const groupBy   = document.getElementById('filter-group-by')?.value;
+        const status    = document.getElementById('filter-report-status')?.value;
 
         if (startDate) params.start_date  = startDate;
         if (endDate)   params.end_date    = endDate;
@@ -107,6 +110,7 @@ export class ReportsModule {
         if (custId)    params.customer_id = custId;
         if (prodId)    params.product_id  = prodId;
         if (groupBy)   params.group_by    = groupBy;
+        if (status)    params.status      = status;
 
         try {
             const res = await apiClient.get('/reports/' + this.activeReport, { params });
@@ -159,9 +163,10 @@ export class ReportsModule {
         const sales   = data?.sales?.data ?? [];
         const summary = data?.summary ?? {};
         this.renderSummaryCards([
-            { label: 'Total Revenue',  value: window.formatKES(summary.total_sales ?? 0),        icon: 'fa-coins',   color: 'success' },
-            { label: 'Transactions',   value: summary.total_transactions ?? 0,                     icon: 'fa-receipt', color: 'primary' },
-            { label: 'Avg Sale Value', value: window.formatKES(summary.average_sale_value ?? 0),   icon: 'fa-chart-bar', color: 'info' },
+            { label: 'Confirmed Revenue',  value: window.formatKES(summary.total_sales ?? 0),        icon: 'fa-check-circle', color: 'success' },
+            { label: 'Pending Revenue',    value: window.formatKES(summary.pending_revenue ?? 0),     icon: 'fa-clock',        color: 'warning' },
+            { label: 'Transactions',       value: summary.total_transactions ?? 0,                    icon: 'fa-receipt',      color: 'primary' },
+            { label: 'Avg Sale Value',     value: window.formatKES(summary.average_sale_value ?? 0),  icon: 'fa-chart-bar',    color: 'info' },
         ]);
 
         const tbody = document.getElementById('tbody-sales');
@@ -233,8 +238,9 @@ export class ReportsModule {
         const purchases = data?.purchases?.data ?? data?.data ?? [];
         const summary   = data?.summary ?? {};
         this.renderSummaryCards([
-            { label: 'Total Purchases', value: window.formatKES(summary.total_amount ?? 0), icon: 'fa-shopping-cart', color: 'primary' },
-            { label: 'Transactions',    value: summary.total_transactions ?? purchases.length,          icon: 'fa-receipt',       color: 'info' },
+            { label: 'Confirmed Costs',  value: window.formatKES(summary.total_purchases ?? 0),   icon: 'fa-check-circle', color: 'success' },
+            { label: 'Pending Costs',    value: window.formatKES(summary.pending_purchases ?? 0),  icon: 'fa-clock',        color: 'warning' },
+            { label: 'Transactions',     value: summary.total_transactions ?? purchases.length,    icon: 'fa-receipt',      color: 'info' },
         ]);
 
         const tbody = document.getElementById('tbody-purchases');
