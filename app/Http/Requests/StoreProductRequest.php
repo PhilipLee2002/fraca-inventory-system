@@ -25,6 +25,7 @@ class StoreProductRequest extends ApiRequest
             'current_stock' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
             'is_active'     => 'boolean',
+            'is_in_house'   => 'boolean',
         ];
     }
 

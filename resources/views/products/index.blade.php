@@ -123,6 +123,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Supplier</label>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="product-in-house">
+                                <label class="form-check-label small text-muted" for="product-in-house">
+                                    Made in-house (no supplier)
+                                </label>
+                            </div>
                             <select class="form-select" name="supplier_id" id="product-supplier">
                                 <option value="">Select supplier...</option>
                             </select>

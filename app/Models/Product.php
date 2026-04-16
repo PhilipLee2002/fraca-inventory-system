@@ -28,7 +28,8 @@ class Product extends Model
 
     protected $fillable = [
         'name', 'sku', 'description', 'cost_price', 'selling_price',
-        'current_stock', 'reorder_level', 'category_id', 'supplier_id', 'is_active',
+        'current_stock', 'reorder_level', 'category_id', 'supplier_id',
+        'is_active', 'is_in_house', 'barcode',
     ];
     public function category()
 {
