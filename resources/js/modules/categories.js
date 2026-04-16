@@ -96,7 +96,7 @@ export class CategoriesModule {
             document.getElementById('category-name').value        = category.name ?? '';
             document.getElementById('category-description').value = category.description ?? '';
         }
-        new bootstrap.Modal(document.getElementById('categoryModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal')).show();
     }
 
     async edit(id) {
@@ -133,6 +133,8 @@ export class CategoriesModule {
         } catch (err) {
             if (err.response?.status === 422) {
                 window.utils?.displayValidationErrors(err.response.data.errors ?? {}, form);
+            } else {
+                window.utils?.showToast(err.response?.data?.message ?? 'Failed to save category.', 'error');
             }
         } finally {
             btn.disabled = false; spin.classList.add('d-none');
