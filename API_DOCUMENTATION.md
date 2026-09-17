@@ -6,13 +6,15 @@ http://127.0.0.1:8000/api
 ```
 
 ## Authentication
-All endpoints (except login) require Bearer token authentication using Laravel Sanctum.
+The shop UI uses **session cookies** (Laravel `web` + `auth`). Every API route except login also requires a `permission:*` middleware. `POST /api/login` may return a Sanctum token for optional clients; Blade/Axios calls do not send `Authorization: Bearer`.
 
-### Headers
+Staff responses omit `cost_price`. Public registration does not exist.
+
+### Headers (browser app)
 ```
-Authorization: Bearer {token}
-Content-Type: application/json
 Accept: application/json
+X-CSRF-TOKEN: {from meta / cookie}
+Content-Type: application/json
 ```
 
 ---
@@ -25,8 +27,8 @@ Accept: application/json
 **Request Body:**
 ```json
 {
-  "email": "admin@inventory.com",
-  "password": "password123"
+  "email": "benjamin@fracaservcomltd.co.ke",
+  "password": "Frac@Servcom2026"
 }
 ```
 
@@ -39,7 +41,7 @@ Accept: application/json
     "user": {
       "id": 1,
       "name": "Admin User",
-      "email": "admin@inventory.com"
+      "email": "benjamin@fracaservcomltd.co.ke"
     },
     "token": "1|abc123..."
   }
@@ -487,26 +489,24 @@ Returns total inventory value based on unit prices and current stock.
 ## Test Accounts
 
 ```
-Admin:
-Email: admin@inventory.com
-Password: password123
-
-Manager:
-Email: manager@inventory.com
-Password: password123
-
-Staff:
-Email: staff@inventory.com
-Password: password123
+Benjamin (Admin):   benjamin@fracaservcomltd.co.ke
+Anne (Manager):     anne@fracaservcomltd.co.ke
+Franklin (Manager): franklin@fracaservcomltd.co.ke
+Reception (Staff):  reception@fracaservcomltd.co.ke
+Password:           FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
 ```
+
+Demo `admin@inventory.com` / `password123` accounts are deactivated.
 
 ---
 
 ## Notes
 
-1. All timestamps are in UTC
-2. Pagination uses Laravel's standard format
-3. All monetary values are in decimal format (2 decimal places)
-4. Stock adjustments automatically update product stock levels
-5. Purchase and sale creation automatically updates stock levels
-6. Soft deletes are not implemented - use `is_active` flag instead
+1. Timestamps and “today/this week” totals use `Africa/Nairobi`
+2. Pagination uses the app’s `sendPaginated` envelope
+3. Monetary values are decimal (2 places), displayed as KSh
+4. Stock adjustments update `current_stock`
+5. Sales reduce stock **only when status is completed**
+6. M-Pesa (`payment_method=transfer`) requires `reference_number`
+7. `GET /sales/{id}/invoice` streams an A4 PDF (web route, not JSON)
+8. Website `POST /api/contact` is not this API and does not create sales

@@ -83,4 +83,53 @@ class BaseController extends Controller
 
         return $this->sendSuccess($data, $message);
     }
+
+    /**
+     * Reception / staff must not see purchase cost on products.
+     */
+    protected function hideCostFromStaff($products)
+    {
+        if (auth()->user()?->canSeeCost()) {
+            return $products;
+        }
+
+        $hide = function ($product) {
+            $product->makeHidden(['cost_price']);
+
+            return $product;
+        };
+
+        if ($products instanceof \Illuminate\Contracts\Pagination\Paginator) {
+            $products->getCollection()->transform($hide);
+
+            return $products;
+        }
+
+        if ($products instanceof \Illuminate\Support\Collection) {
+            return $products->each($hide);
+        }
+
+        return $hide($products);
+    }
+
+    protected function hideNestedSaleCosts($sales): void
+    {
+        if (auth()->user()?->canSeeCost()) {
+            return;
+        }
+
+        if ($sales instanceof \Illuminate\Contracts\Pagination\Paginator) {
+            $collection = $sales->getCollection();
+        } elseif ($sales instanceof \Illuminate\Support\Collection) {
+            $collection = $sales;
+        } else {
+            $collection = collect([$sales]);
+        }
+
+        $collection->each(function ($sale) {
+            foreach ($sale->items ?? [] as $item) {
+                $item->product?->makeHidden(['cost_price']);
+            }
+        });
+    }
 }

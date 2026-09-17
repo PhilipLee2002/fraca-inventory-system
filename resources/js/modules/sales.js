@@ -52,6 +52,7 @@ export class SalesModule {
             const rm = e.target.closest('.btn-remove-row');
             if (rm) { rm.closest('tr').remove(); this.recalcTotal(); }
         });
+        document.getElementById('sale-payment-method')?.addEventListener('change', () => this.toggleReferenceField());
         // Clean up modal state on hide so re-open works cleanly
         document.getElementById('saleModal')?.addEventListener('hidden.bs.modal', () => {
             this.editingId = null;
@@ -160,7 +161,9 @@ export class SalesModule {
         document.getElementById('sale-date').value                 = sale?.sale_date ?? new Date().toISOString().split('T')[0];
         document.getElementById('sale-customer').value             = sale?.customer_id ?? '';
         document.getElementById('sale-payment-method').value       = sale?.payment_method ?? 'cash';
+        document.getElementById('sale-reference').value            = sale?.reference_number ?? '';
         document.getElementById('sale-status').value               = sale?.status ?? 'pending';
+        this.toggleReferenceField();
         document.getElementById('sale-notes').value                = sale?.notes ?? '';
         const ib = document.getElementById('sale-items-body');
         ib.innerHTML = '';
@@ -194,14 +197,17 @@ export class SalesModule {
                 '<div class="col-md-3"><strong>Customer:</strong><br>' + this.esc(cust) + '</div>' +
                 '<div class="col-md-3"><strong>Date:</strong><br>' + (s.sale_date ?? '---') + '</div>' +
                 '<div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-' + (s.status === 'completed' ? 'success' : s.status === 'cancelled' ? 'danger' : 'warning') + '">' + s.status + '</span></div>' +
-                '<div class="col-md-3"><strong>Payment:</strong><br>' + (s.payment_method === 'transfer' ? 'Mpesa' : (s.payment_method ?? '---')) + '</div>' +
+                '<div class="col-md-3"><strong>Payment:</strong><br>' + this.paymentLabel(s.payment_method) +
+                (s.reference_number ? '<br><span class="small text-muted">Ref: ' + this.esc(s.reference_number) + '</span>' : '') + '</div>' +
                 '<div class="col-md-9"><strong>Notes:</strong><br>' + this.esc(s.notes ?? '---') + '</div>' +
                 '</div>' +
                 '<table class="table table-sm">' +
                 '<thead class="table-light"><tr><th>Product</th><th class="text-center">Qty</th><th class="text-end">Unit Price</th><th class="text-end">Subtotal</th></tr></thead>' +
                 '<tbody>' + rows + '</tbody>' +
                 '<tfoot><tr><td colspan="3" class="text-end fw-bold">Total:</td><td class="text-end fw-bold">' + window.formatKES(s.total_amount ?? 0) + '</td></tr></tfoot>' +
-                '</table>';
+                '</table>' +
+                '<a class="btn btn-sm btn-outline-dark mt-2" href="/sales/' + s.id + '/invoice" target="_blank">' +
+                '<i class="fas fa-print me-1"></i> Print A4 invoice</a>';
             document.getElementById('saleModalLabel').textContent = 'Sale ' + (s.invoice_number ?? '#' + s.id);
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
         } catch {
@@ -279,6 +285,7 @@ export class SalesModule {
             customer_id:    document.getElementById('sale-customer').value || null,
             sale_date:      document.getElementById('sale-date').value,
             payment_method: document.getElementById('sale-payment-method').value,
+            reference_number: document.getElementById('sale-reference').value.trim() || null,
             status:         document.getElementById('sale-status').value,
             notes:          document.getElementById('sale-notes').value.trim() || null,
             items,
@@ -336,6 +343,19 @@ export class SalesModule {
             if (err.response?.status !== 401 && err.response?.status !== 403)
                 window.utils?.showToast(err.response?.data?.message ?? 'Failed to delete.', 'error');
         }
+    }
+
+    paymentLabel(method) {
+        const labels = { cash: 'Cash', transfer: 'M-Pesa', bank: 'Bank transfer', card: 'Card' };
+        return labels[method] ?? (method ?? '---');
+    }
+
+    toggleReferenceField() {
+        const method = document.getElementById('sale-payment-method')?.value;
+        const input = document.getElementById('sale-reference');
+        if (!input) return;
+        input.required = method === 'transfer';
+        input.placeholder = method === 'transfer' ? 'M-Pesa / Till reference (required)' : 'Optional reference';
     }
 
     esc(str) {

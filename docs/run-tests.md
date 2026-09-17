@@ -1,6 +1,6 @@
 # Running Tests — FRACA SERVCOM Inventory Management System
 
-**Document Date:** February 14, 2026  
+**Document Date:** September 2026  
 **Target Audience:** Developers, QA Engineers, CI/CD Pipelines
 
 ---
@@ -341,24 +341,26 @@ php artisan db:seed --class=PermissionSeeder
 
 | Seeder | Records Created |
 |--------|-----------------|
-| `RolesTableSeeder` | Admin, Staff roles |
-| `UsersTableSeeder` | admin@test.local, staff@test.local |
-| `PermissionSeeder` | 15+ permissions, role assignments |
-| `CategoriesTableSeeder` | 5 product categories |
-| `SuppliersTableSeeder` | 3 suppliers |
-| `CustomersTableSeeder` | 3 customers |
-| `ProductsSeeder` | 10 sample products |
+| `RolesTableSeeder` | Admin, Manager, Staff |
+| `UsersTableSeeder` | Benjamin, Anne, Franklin, Receptionist (demo emails deactivated) |
+| `PermissionSeeder` | Permissions + role assignments (Staff has no view-report) |
+| `CategoriesTableSeeder` | Furniture + bags from website-catalog.json |
+| `SuppliersTableSeeder` | Sample suppliers |
+| `ProductsTableSeeder` | Catalog snapshot (stock 0, cost 0) |
 
 ### Test User Credentials
 
-After seeding, login with:
-```
-Email: admin@test.local
-Password: password
+After seeding, log in as:
 
-Email: staff@test.local
-Password: password
 ```
+benjamin@fracaservcomltd.co.ke  (Admin)
+anne@fracaservcomltd.co.ke      (Accountant)
+franklin@fracaservcomltd.co.ke  (Store)
+reception@fracaservcomltd.co.ke (Reception)
+Password: FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
+```
+
+PHPUnit uses factory users with password `password`, not these emails.
 
 ### Reset Database
 

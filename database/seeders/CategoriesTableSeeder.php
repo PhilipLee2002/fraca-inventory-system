@@ -2,25 +2,36 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Category;
+use Illuminate\Database\Seeder;
 
 class CategoriesTableSeeder extends Seeder
 {
-    
-     # Run the database seeds.
-   public function run()
+    public function run(): void
     {
-        $categories = [
-            ['name' => 'Electronics', 'description' => 'Electronic devices'],
-            ['name' => 'Office Supplies', 'description' => 'Office materials'],
-            ['name' => 'Food & Beverages', 'description' => 'Consumable items'],
-            ['name' => 'Clothing', 'description' => 'Apparel and wearables'],
-        ];
-        
-        foreach ($categories as $category) {
-            Category::create($category);
+        $catalog = $this->catalog();
+
+        foreach ($catalog['categories'] as $category) {
+            Category::updateOrCreate(
+                ['slug' => $category['slug']],
+                [
+                    'name' => $category['name'],
+                    'group' => $category['group'],
+                    'description' => $category['description'] ?? null,
+                ]
+            );
         }
+    }
+
+    private function catalog(): array
+    {
+        $path = database_path('data/website-catalog.json');
+        $json = json_decode(file_get_contents($path), true);
+
+        if (! is_array($json) || empty($json['categories'])) {
+            throw new \RuntimeException('website-catalog.json is missing or has no categories. Run node database/scripts/extract-website-catalog.mjs');
+        }
+
+        return $json;
     }
 }

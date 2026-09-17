@@ -1,15 +1,15 @@
 # System Architecture Document
 ## FRACA SERVCOM Inventory Management System
 
-**Document Version:** 1.0
-**Date:** March 2026
-**Technology Stack:** Laravel 11, PHP 8.2, MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
+**Document Version:** 1.1
+**Date:** September 2026
+**Technology Stack:** Laravel 12, PHP 8.2, SQLite or MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
 
 ---
 
 ## 1. System Overview
 
-The FRACA SERVCOM Inventory Management System is a monolithic web application built on the Laravel framework. It follows a hybrid architecture: server-rendered Blade page shells with AJAX-driven content loading via a JSON REST API. All business logic resides on the server; the browser handles rendering and user interaction through vanilla JavaScript ES6 class modules.
+The FRACA SERVCOM Inventory Management System is a monolithic Laravel shop app for furniture and bags. Blade shells load JSON over the same session. The public website (`FRACA-SERVCOM-WEBSITE/`) is a separate static catalog; IMS imports a snapshot and never writes stock back.
 
 ---
 
@@ -62,6 +62,7 @@ The FRACA SERVCOM Inventory Management System is a monolithic web application bu
 │  products  categories  suppliers  customers                           │
 │  sales  sale_items  purchases  purchase_items                         │
 │  stock_histories  alerts  cache  jobs                                 │
+│  (catalog snapshot: database/data/website-catalog.json)               │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -86,14 +87,14 @@ A configured Axios instance that:
 
 ### 3.2 Application Layer
 
-**HTTP Kernel (`app/Http/Kernel.php`)**
-Registers middleware groups. The `web` group handles session, CSRF, and authentication. Custom middleware `CheckRole` and `CheckPermission` are registered as route middleware aliases.
+**HTTP Kernel (`bootstrap/app.php`)**
+Registers middleware aliases `role` and `permission`. The `web` group handles session, CSRF, and authentication.
 
 **Web Routes (`routes/web.php`)**
 Serve Blade page shells. Protected by `auth` middleware and per-route `permission:*` middleware. No data is returned from web routes — they only render the HTML shell.
 
 **API Routes (`routes/api.php`)**
-Registered under the `/api` prefix with the `web` middleware group (session-based auth). All routes except `POST /api/login` require the `auth` middleware. Returns JSON responses only.
+Registered under `/api` with the `web` middleware group (session cookie). `POST /api/login` is public. Every other route requires `auth` **and** a `permission:*` middleware. JSON 401/403 from `CheckPermission`. Staff responses omit `cost_price`.
 
 **API Controllers (`app/Http/Controllers/Api/`)**
 One controller per resource. All extend `BaseController` which provides standardized response helpers: `sendSuccess()`, `sendPaginated()`, `sendCreated()`, `sendUpdated()`, `sendDeleted()`, `sendError()`.
@@ -190,8 +191,10 @@ Manager clicks Delete
 |-------|---------|-------------|
 | Purchase created (status: received) | `PurchaseController::store()` | +quantity per item |
 | Purchase status → received | `PurchaseController::updateStatus()` | +quantity per item |
-| Sale created (status: completed) | `SaleController::store()` | -quantity per item |
+| Sale created pending | `SaleController::store()` | no stock change |
+| Sale created completed | `SaleController::store()` via `SaleStockService` | -quantity per item |
 | Sale status → completed | `SaleController::updateStatus()` | -quantity per item |
+| Sale cancelled / deleted after completed | `SaleStockService::incrementFor()` | +quantity restored |
 | Manual adjustment | `StockAdjustmentController::store()` | ±quantity or set |
 
 ### 5.2 Stock History Tracking
@@ -224,6 +227,8 @@ The `GenerateStockAlerts` console command (scheduled via `app/console/Kernel.php
 ```
 /api/login                          POST  — public
 /api/logout                         POST  — auth required
+# All resource routes also require permission:* (view/create/edit/delete-*)
+/sales/{sale}/invoice               GET   — web, A4 PDF (permission:view-sale)
 /api/products                       GET, POST
 /api/products/{id}                  GET, PUT, DELETE
 /api/products/low-stock             GET
@@ -302,7 +307,7 @@ public/build/
 
 ```javascript
 window.appData = {
-    user: { id, name, email, role },
+    user: { id, name, email, role, can_see_cost },
     permissions: ['view-product', 'create-sale', ...],
     csrfToken: '...'
 }
@@ -322,7 +327,7 @@ window.formatKES = (value) => 'KSh X,XXX.XX'
 Developer Machine
 ├── php artisan serve     → http://localhost:8000
 ├── npm run dev           → Vite HMR on http://localhost:5173
-└── MySQL (local)         → fraca_inventory database
+└── SQLite (default) or MySQL → .env
 ```
 
 ### 8.2 Production Environment
@@ -343,15 +348,11 @@ Cron (for scheduled commands):
 Key variables:
 
 ```
-APP_ENV=production
-APP_KEY=base64:...
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_DATABASE=fraca_inventory
-DB_USERNAME=...
-DB_PASSWORD=...
-SESSION_DRIVER=database
-CACHE_DRIVER=database
+APP_TIMEZONE=Africa/Nairobi
+DB_CONNECTION=sqlite
+# or mysql: DB_DATABASE=fraca_inventory
+FRACASERVCOM_STAFF_PASSWORD=...
+WEBSITE_ASSET_URL=https://fracaservcom.co.ke
 ```
 
 ---

@@ -31,9 +31,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'role_id',
         'status',
+        'email_verified_at',
     ];
 
     /**
@@ -164,5 +166,18 @@ class User extends Authenticatable
     public function isStaff()
     {
         return $this->hasRole('staff');
+    }
+
+    /**
+     * Cost price is for MD / accountant / store — not reception.
+     */
+    public function canSeeCost(): bool
+    {
+        return $this->isAdmin() || $this->isManager();
+    }
+
+    public function isActive(): bool
+    {
+        return ($this->status ?? 'active') === 'active';
     }
 }

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SaleInvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/sales', fn() => view('sales.index'))
         ->name('page.sales')->middleware('permission:view-sale');
+
+    Route::get('/sales/{sale}/invoice', SaleInvoiceController::class)
+        ->name('sales.invoice')->middleware('permission:view-sale');
 
     Route::get('/purchases', fn() => view('purchases.index'))
         ->name('page.purchases')->middleware('permission:view-purchase');

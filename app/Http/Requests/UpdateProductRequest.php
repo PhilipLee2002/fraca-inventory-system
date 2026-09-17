@@ -18,8 +18,10 @@ class UpdateProductRequest extends ApiRequest
         return [
             'name' => ['sometimes', 'string', 'max:255', Rule::unique('products')->ignore($productId)],
             'sku'  => ['sometimes', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($productId)],
+            'website_slug' => ['nullable', 'string', 'max:100', Rule::unique('products', 'website_slug')->ignore($productId)],
             'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->ignore($productId)],
             'description'   => 'nullable|string',
+            'image'         => 'nullable|string|max:500',
             'category_id'   => 'sometimes|exists:categories,id',
             'supplier_id'   => 'nullable|exists:suppliers,id',
             'cost_price'    => 'sometimes|numeric|min:0',

@@ -89,8 +89,10 @@ export class DashboardModule {
         // Basic stats
         this.setStat('total-products', stats.total_products ?? 0);
         this.setStat('todays-sales', this.formatCurrency(stats.today_sales ?? 0));
+        this.setStat('week-sales', this.formatCurrency(stats.week_sales ?? 0));
         this.setStat('low-stock', stats.low_stock_items ?? 0);
-        this.setStat('total-users', stats.total_users ?? 0);
+        this.setPaymentStats('today', stats.today_by_payment);
+        this.setPaymentStats('week', stats.week_by_payment);
 
         // Extended metrics (Manager/Admin)
         this.setStat('monthly-sales', this.formatCurrency(stats.monthly_sales ?? 0));
@@ -107,6 +109,13 @@ export class DashboardModule {
         this.setStat('pending-purchases', stats.pending_purchases ?? 0);
         this.setStat('active-alerts', stats.active_alerts ?? 0);
         this.setStat('recent-adjustments', stats.recent_adjustments ?? 0);
+    }
+
+    setPaymentStats(prefix, breakdown) {
+        const data = breakdown ?? {};
+        ['cash', 'mpesa', 'bank', 'card'].forEach(method => {
+            this.setStat(`${prefix}-${method}`, this.formatCurrency(data[method] ?? 0));
+        });
     }
 
     formatCurrency(value) {

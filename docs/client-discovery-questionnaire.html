@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRACA SERVCOM — Inventory system questionnaire</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #555;
+      --line: #ccc;
+      --accent: #7a1f2b;
+      --ok: #1b5e20;
+      --wait: #8a5a00;
+      --skip: #444;
+      --have: #0d47a1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #f3f1f0;
+      font: 15px/1.45 "Segoe UI", Calibri, Arial, sans-serif;
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .toolbar strong { color: var(--accent); margin-right: 6px; }
+    .toolbar button, .toolbar label.btn {
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+    }
+    .toolbar button.secondary { background: #444; }
+    .toolbar button.plan { background: #0d47a1; }
+    .sheet, .plan-sheet {
+      max-width: 210mm;
+      margin: 16px auto;
+      padding: 14mm 14mm 16mm;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+    header.form-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; color: var(--accent); }
+    .sub { color: var(--muted); margin: 0; font-size: 13px; }
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+      min-width: 260px;
+      font-size: 13px;
+    }
+    .meta label { display: block; font-weight: 600; font-size: 11px; color: var(--muted); }
+    .note {
+      background: #f7f1f2;
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px;
+      margin: 0 0 12px;
+      font-size: 13px;
+    }
+    h2 {
+      margin: 16px 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+    }
+    .q { margin: 0 0 10px; }
+    .q > p { margin: 0 0 4px; font-weight: 600; font-size: 13.5px; }
+    .explain { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; margin: -2px 0 6px; }
+    .hint { font-weight: 400 !important; color: var(--muted); }
+    .known {
+      background: #eef4fb;
+      border-left: 3px solid #0d47a1;
+      padding: 8px 12px;
+      margin: 0 0 12px;
+      font-size: 13px;
+    }
+    .known ul { margin: 6px 0 0; padding-left: 18px; }
+    .known li { margin: 0 0 3px; }
+    .opts { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+    .opts.col { flex-direction: column; gap: 3px; }
+    .opts label { font-weight: 400; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; }
+    input[type="text"], textarea {
+      width: 100%;
+      border: none;
+      border-bottom: 1px dotted var(--line);
+      font: inherit;
+      padding: 3px 2px;
+      background: transparent;
+    }
+    textarea { border: 1px dotted var(--line); min-height: 38px; padding: 6px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f4eef0; }
+    footer.doc {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    #plan { display: none; }
+    #plan.visible { display: block; }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 3px;
+      color: #fff;
+      margin-right: 6px;
+    }
+    .badge.launch { background: var(--accent); }
+    .badge.have { background: var(--have); }
+    .badge.later { background: var(--wait); }
+    .badge.hold { background: var(--skip); }
+    .item { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .item h3 { margin: 0 0 4px; font-size: 15px; }
+    .item p { margin: 0; font-size: 13.5px; color: #333; }
+    .empty { color: var(--muted); font-style: italic; }
+    @media (max-width: 720px) {
+      .grid-2, .meta, header.form-head { grid-template-columns: 1fr; display: grid; }
+      header.form-head { display: block; }
+      .sheet, .plan-sheet { margin: 0; box-shadow: none; padding: 16px; }
+    }
+    @media print {
+      body { background: #fff; font-size: 11.5px; line-height: 1.35; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar { display: none !important; }
+      .sheet, .plan-sheet { margin: 0; padding: 0; box-shadow: none; max-width: none; }
+      h1 { font-size: 18px; }
+      .print-plan-only .sheet { display: none !important; }
+      .print-form-only #plan { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <strong>FRACA questionnaire</strong>
+    <button type="button" onclick="printForm()">Print / Save questionnaire PDF</button>
+    <button type="button" class="secondary" onclick="saveAnswers()">Save answers</button>
+    <label class="btn secondary">Load answers<input type="file" id="load-file" accept="application/json" hidden></label>
+    <button type="button" class="plan" onclick="generatePlan()">Generate what to build</button>
+    <button type="button" class="secondary" id="print-plan-btn" hidden onclick="printPlan()">Print build plan PDF</button>
+  </div>
+
+  <form id="questionnaire" class="sheet" autocomplete="off">
+    <header class="form-head">
+      <div>
+        <h1>FRACA SERVCOM</h1>
+        <p class="sub">Inventory system — client questionnaire</p>
+        <p class="sub">Tick all that apply. About 15–20 minutes. Open this file in Chrome or Edge, then print or save as PDF.</p>
+      </div>
+      <div class="meta">
+        <div><label for="respondent">Your name</label><input type="text" id="respondent" name="respondent"></div>
+        <div><label for="role">Role / title</label><input type="text" id="role" name="role"></div>
+        <div><label for="phone">Phone / WhatsApp</label><input type="text" id="phone" name="phone"></div>
+        <div><label for="filled_date">Date</label><input type="text" id="filled_date" name="filled_date"></div>
+      </div>
+    </header>
+
+    <p class="note">Best filled by the owner <strong>together with</strong> whoever sells at the counter and whoever receives deliveries. After it is returned, open this same file, enter the answers if needed, and click <strong>Generate what to build</strong>.</p>
+
+    <div class="known">
+      <strong>Already taken from fracaservcom.co.ke — only correct us if this is wrong</strong>
+      <ul>
+        <li>Two shops in one company: <strong>furniture</strong> (home, office, church/school) and <strong>bags</strong> (handbags, travel, backpacks). There is no hardware shop on the website.</li>
+        <li>You <strong>make</strong> wooden and metal furniture and also sell bags. Customers: homes, offices, schools, churches, bulk orders. Base: Musco Towers, Eldoret, since 2001.</li>
+        <li>Furniture on the site has photos but <strong>no prices</strong> (“request a quote”). Bags show <strong>KSh prices</strong>.</li>
+        <li>People reach you by walk-in, WhatsApp, phone, and the website “quote / product inquiry” form. You offer Kenya-wide delivery.</li>
+      </ul>
+    </div>
+
+    <h2>1. People and places</h2>
+    <div class="grid-2">
+      <div class="q">
+        <p>How many people will use the system daily?</p>
+        <input type="text" name="users_daily" placeholder="Number + names / job titles">
+      </div>
+      <div class="q">
+        <p>Where will they use it?</p>
+        <div class="opts">
+          <label><input type="checkbox" name="use_where" value="office"> Office computer</label>
+          <label><input type="checkbox" name="use_where" value="counter"> Counter</label>
+          <label><input type="checkbox" name="use_where" value="phone"> Phone</label>
+          <label><input type="checkbox" name="use_where" value="workshop"> Workshop / store</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Locations with stock</p>
+      <div class="opts">
+        <label><input type="checkbox" name="locations" value="showroom"> One showroom only</label>
+        <label><input type="checkbox" name="locations" value="workshop"> Separate workshop / factory</label>
+        <label><input type="checkbox" name="locations" value="godown"> Separate store / godown</label>
+        <label><input type="checkbox" name="locations" value="branch"> Second town / branch</label>
+      </div>
+      <input type="text" name="locations_notes" placeholder="If more than one: should each keep its own stock count? Yes / No">
+    </div>
+    <div class="q">
+      <p>Who may change prices, delete a sale, or add a new user? <span class="hint">(names)</span></p>
+      <input type="text" name="who_controls" placeholder="prices: …   delete sale: …   add users: …">
+    </div>
+
+    <h2>2. How you sell today</h2>
+    <div class="q">
+      <p>Where do orders come from?</p>
+      <div class="opts">
+        <label><input type="checkbox" name="orders_from" value="walkin"> Walk-in</label>
+        <label><input type="checkbox" name="orders_from" value="whatsapp"> WhatsApp</label>
+        <label><input type="checkbox" name="orders_from" value="phone"> Phone</label>
+        <label><input type="checkbox" name="orders_from" value="website"> Website form</label>
+        <label><input type="checkbox" name="orders_from" value="visit"> Site visit / quotation</label>
+        <label><input type="checkbox" name="orders_from" value="tenders"> Tenders</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>When is stock “sold”?</p>
+        <div class="opts col">
+          <label><input type="radio" name="sold_when" value="pay"> When they pay</label>
+          <label><input type="radio" name="sold_when" value="invoice"> When we write the invoice</label>
+          <label><input type="radio" name="sold_when" value="delivery"> When goods leave / are delivered</label>
+          <label><input type="radio" name="sold_when" value="other"> Other (write below)</label>
+        </div>
+        <input type="text" name="sold_when_notes" placeholder="If other">
+      </div>
+      <div class="q">
+        <p>Do you take deposits (pay now, balance later)?</p>
+        <div class="opts">
+          <label><input type="radio" name="deposit" value="often"> Yes, often</label>
+          <label><input type="radio" name="deposit" value="sometimes"> Sometimes</label>
+          <label><input type="radio" name="deposit" value="never"> Never</label>
+        </div>
+        <p>Credit sales (invoice now, pay in 30/60 days)?</p>
+        <div class="opts">
+          <label><input type="radio" name="credit" value="yes"> Yes</label>
+          <label><input type="radio" name="credit" value="rarely"> Rarely</label>
+          <label><input type="radio" name="credit" value="no"> No</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Do you issue a quote that is not yet a sale?</p>
+      <div class="opts">
+        <label><input type="radio" name="quote" value="system"> Yes — must be in the system</label>
+        <label><input type="radio" name="quote" value="paper"> Yes — paper/WhatsApp is enough for now</label>
+        <label><input type="radio" name="quote" value="no"> No</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>Can goods leave before full payment?</p>
+      <div class="opts">
+        <label><input type="radio" name="leave" value="no"> No</label>
+        <label><input type="radio" name="leave" value="deposit"> Yes, with deposit</label>
+        <label><input type="radio" name="leave" value="credit"> Yes, on credit (named customers only)</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>When a customer pays, what should they take with them?</p>
+        <span class="explain">Tick every kind of paper or file you actually give today. A “KRA tax invoice” is the official one for companies — not a normal shop receipt.</span>
+        <div class="opts col">
+          <label><input type="checkbox" name="docs" value="a4"> Printed invoice on normal A4 paper</label>
+          <label><input type="checkbox" name="docs" value="thermal"> Small till / supermarket-style receipt</label>
+          <label><input type="checkbox" name="docs" value="pdf"> PDF sent on WhatsApp or email</label>
+          <label><input type="checkbox" name="docs" value="etims"> Official KRA tax invoice (eTIMS)</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>VAT registered?</p>
+        <div class="opts">
+          <label><input type="radio" name="vat" value="all"> Yes — 16% on all</label>
+          <label><input type="radio" name="vat" value="mixed"> Yes — mixed (some exempt)</label>
+          <label><input type="radio" name="vat" value="no"> No</label>
+        </div>
+        <p>Payments you must record</p>
+        <div class="opts">
+          <label><input type="checkbox" name="payments" value="cash"> Cash</label>
+          <label><input type="checkbox" name="payments" value="till"> M-Pesa Till</label>
+          <label><input type="checkbox" name="payments" value="paybill"> M-Pesa Paybill</label>
+          <label><input type="checkbox" name="payments" value="bank"> Bank transfer</label>
+          <label><input type="checkbox" name="payments" value="card"> Card</label>
+        </div>
+        <input type="text" name="mpesa_codes" placeholder="Must we record M-Pesa / bank reference codes? Yes / No">
+      </div>
+    </div>
+    <div class="q">
+      <p>Discounts: who may give them, and is there a maximum % without the owner?</p>
+      <input type="text" name="discounts">
+    </div>
+
+    <h2>3. What to load on day one</h2>
+    <div class="q">
+      <p>Which products should staff be able to sell in the computer from the first week?</p>
+      <span class="explain">Taken from your website catalog. Tick what must be typed in before launch. Hardware (nails, screws, paint) is not on the site — leave it unticked unless you really sell it.</span>
+      <div class="opts col">
+        <label><input type="checkbox" name="lines" value="furniture_home"> Home furniture — beds, dining sets, sofas, coffee tables, wardrobes</label>
+        <label><input type="checkbox" name="lines" value="furniture_office"> Office furniture — chairs, desks, conference tables, filing cabinets, reception desks</label>
+        <label><input type="checkbox" name="lines" value="furniture_church"> Church &amp; school furniture — pews, pulpits, benches, link chairs, student desks</label>
+        <label><input type="checkbox" name="lines" value="bags"> Bags — handbags, travel bags, backpacks, laptop bags (these already have KSh prices on the website)</label>
+        <label><input type="checkbox" name="lines" value="hardware"> We also sell hardware / building supplies (not shown on the website)</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>If we cannot load everything at once, what comes first?</p>
+      <div class="opts col">
+        <label><input type="radio" name="first_line" value="furniture"> Furniture first, bags later</label>
+        <label><input type="radio" name="first_line" value="bags"> Bags first, furniture later</label>
+        <label><input type="radio" name="first_line" value="both"> Furniture and bags together from day one</label>
+        <label><input type="radio" name="first_line" value="church"> Church / school orders first (pews, pulpits, bulk seating)</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>Do you sell furniture that is already in the showroom, or do you also make pieces after the customer orders?</p>
+      <span class="explain">Example: a customer wants a pulpit in their church colours. You build it in the workshop, then deliver it. That is “made after they order”.</span>
+      <div class="opts col">
+        <label><input type="radio" name="mto" value="ready"> Only what is already in the showroom / store</label>
+        <label><input type="radio" name="mto" value="job"> Mostly made after they order</label>
+        <label><input type="radio" name="mto" value="mix"> Both — some ready, some made after they order</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>Should the computer count timber, foam and fabric — or only finished furniture and bags?</p>
+      <span class="explain">Your site says you manufacture furniture. If we only count finished sofas and desks, we will not know when wood or foam is running out.</span>
+      <div class="opts col">
+        <label><input type="radio" name="bom" value="launch"> Yes — also count timber, foam, fabric from the first week</label>
+        <label><input type="radio" name="bom" value="later"> Later — for now only count finished chairs, desks, bags</label>
+        <label><input type="radio" name="bom" value="no"> No — never track workshop materials in this system</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>Bag prices on the website vs the shop</p>
+        <span class="explain">Bags on the site already show prices (for example KSh 2,000–3,000). Furniture has no prices — people request a quote.</span>
+        <div class="opts col">
+          <label><input type="radio" name="webprice" value="match"> Shop and website bag prices must always be the same</label>
+          <label><input type="radio" name="webprice" value="guide"> Website is a guide; the shop can charge a different price</label>
+          <label><input type="radio" name="webprice" value="quote"> We do not use those website prices — we always quote</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Do the same people sell furniture and bags?</p>
+        <div class="opts col">
+          <label><input type="radio" name="all_lines" value="yes"> Yes — one counter sells everything</label>
+          <label><input type="radio" name="all_lines" value="no"> No — furniture staff and bags staff are different</label>
+        </div>
+      </div>
+    </div>
+
+    <h2>4. Stock</h2>
+    <div class="grid-2">
+      <div class="q">
+        <p>How is stock recorded today?</p>
+        <div class="opts">
+          <label><input type="checkbox" name="stock_today" value="excel"> Excel</label>
+          <label><input type="checkbox" name="stock_today" value="book"> Exercise book</label>
+          <label><input type="checkbox" name="stock_today" value="memory"> Memory / visual</label>
+          <label><input type="checkbox" name="stock_today" value="software"> Other software</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>How often do you count physical stock?</p>
+        <div class="opts">
+          <label><input type="radio" name="count" value="weekly"> Weekly</label>
+          <label><input type="radio" name="count" value="monthly"> Monthly</label>
+          <label><input type="radio" name="count" value="rarely"> Rarely</label>
+          <label><input type="radio" name="count" value="never"> Never</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>If a customer wants 20 church chairs and you only have 8 in the shop, can you still write the sale today?</p>
+      <span class="explain">“Yes” means you take the order (and maybe a deposit) and make or fetch the rest later. “No” means you only sell what you can give today.</span>
+      <div class="opts col">
+        <label><input type="radio" name="oversell" value="no"> No — only sell what is in the shop today</label>
+        <label><input type="radio" name="oversell" value="yes"> Yes — write the sale even if some pieces will come later</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>Unique one-off pieces (serial / name each)?</p>
+        <div class="opts">
+          <label><input type="radio" name="serial" value="yes"> Yes</label>
+          <label><input type="radio" name="serial" value="no"> No — quantities only</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Barcode scanner at the counter?</p>
+        <div class="opts">
+          <label><input type="radio" name="scan" value="launch"> Needed at launch</label>
+          <label><input type="radio" name="scan" value="later"> Later</label>
+          <label><input type="radio" name="scan" value="name"> Name search is enough</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>When chairs or bags are almost finished, who should the computer warn?</p>
+      <span class="explain">Example: office chairs fall below 5. Should the owner see it on the computer, or also get a WhatsApp?</span>
+      <div class="opts">
+        <label><input type="checkbox" name="lowstock_who" value="owner"> Owner</label>
+        <label><input type="checkbox" name="lowstock_who" value="warehouse"> Store / workshop</label>
+        <label><input type="checkbox" name="lowstock_who" value="sales"> Sales counter</label>
+      </div>
+      <p style="margin-top:6px">How should they be told?</p>
+      <div class="opts">
+        <label><input type="radio" name="lowstock_how" value="screen"> Only on the computer screen</label>
+        <label><input type="radio" name="lowstock_how" value="whatsapp"> WhatsApp as well</label>
+        <label><input type="radio" name="lowstock_how" value="email"> Email as well</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>Returns</p>
+      <div class="opts">
+        <label><input type="checkbox" name="returns" value="refund"> Refund</label>
+        <label><input type="checkbox" name="returns" value="exchange"> Exchange</label>
+        <label><input type="checkbox" name="returns" value="credit"> Store credit</label>
+        <label><input type="checkbox" name="returns" value="restock"> Stock goes back to shelf</label>
+        <label><input type="checkbox" name="returns" value="rare"> Rarely happens</label>
+      </div>
+    </div>
+
+    <h2>5. Customers and suppliers</h2>
+    <div class="q">
+      <p>Who do you sell to most often?</p>
+      <span class="explain">Your website already names homes, offices, schools and churches. Tick what is true in a normal week.</span>
+      <div class="opts">
+        <label><input type="checkbox" name="customers" value="retail"> Walk-in retail</label>
+        <label><input type="checkbox" name="customers" value="churches"> Churches</label>
+        <label><input type="checkbox" name="customers" value="offices"> Offices / companies</label>
+        <label><input type="checkbox" name="customers" value="schools"> Schools</label>
+        <label><input type="checkbox" name="customers" value="wholesale"> Wholesalers</label>
+        <label><input type="checkbox" name="customers" value="gov"> Government / tenders</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>Must every sale have a named customer?</p>
+        <div class="opts col">
+          <label><input type="radio" name="named" value="always"> Yes, always</label>
+          <label><input type="radio" name="named" value="walkin"> Cash walk-in can be “Walk-in”</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Customer details you need</p>
+        <div class="opts">
+          <label><input type="checkbox" name="cust_fields" value="phone"> Phone</label>
+          <label><input type="checkbox" name="cust_fields" value="kra"> KRA PIN</label>
+          <label><input type="checkbox" name="cust_fields" value="address"> Delivery address</label>
+          <label><input type="checkbox" name="cust_fields" value="institution"> Institution name</label>
+          <label><input type="checkbox" name="cust_fields" value="email"> Email</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Purchases from suppliers</p>
+      <div class="opts">
+        <label><input type="radio" name="po" value="receive"> Record when goods arrive only</label>
+        <label><input type="radio" name="po" value="orders"> Order now, receive later (purchase orders)</label>
+      </div>
+      <input type="text" name="suppliers_notes" placeholder="How many regular suppliers? Same product from more than one?">
+    </div>
+
+    <h2>6. Money and reports</h2>
+    <div class="grid-2">
+      <div class="q">
+        <p>Who must see daily totals?</p>
+        <input type="text" name="daily_who" placeholder="Owner / accountant / both">
+      </div>
+      <div class="q">
+        <p>Current books</p>
+        <div class="opts">
+          <label><input type="checkbox" name="books_now" value="excel"> Excel</label>
+          <label><input type="checkbox" name="books_now" value="bookkeeper"> Bookkeeper</label>
+          <label><input type="checkbox" name="books_now" value="software"> QuickBooks / Sage / other</label>
+          <label><input type="checkbox" name="books_now" value="none"> None</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Should this system replace the current books, or only keep stock and sales for the accountant?</p>
+      <div class="opts">
+        <label><input type="radio" name="books" value="replace"> Replace</label>
+        <label><input type="radio" name="books" value="feed"> Feed the accountant (export)</label>
+        <label><input type="radio" name="books" value="unsure"> Not sure</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="q">
+        <p>May sales staff see cost price / profit?</p>
+        <div class="opts">
+          <label><input type="radio" name="cost" value="no"> No</label>
+          <label><input type="radio" name="cost" value="yes"> Yes</label>
+          <label><input type="radio" name="cost" value="managers"> Managers only</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Need end-of-day cash-up (drawer vs M-Pesa vs system)?</p>
+        <div class="opts">
+          <label><input type="radio" name="cashup" value="launch"> Yes at launch</label>
+          <label><input type="radio" name="cashup" value="later"> Later</label>
+          <label><input type="radio" name="cashup" value="no"> No</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Reports you want in the first month</p>
+      <div class="opts">
+        <label><input type="checkbox" name="reports" value="sales"> Sales today / this week</label>
+        <label><input type="checkbox" name="reports" value="stock"> Stock on hand</label>
+        <label><input type="checkbox" name="reports" value="low"> Low stock</label>
+        <label><input type="checkbox" name="reports" value="profit"> Profit by product / category</label>
+        <label><input type="checkbox" name="reports" value="customer"> What a church/company has bought</label>
+      </div>
+    </div>
+
+    <h2>7. Website and WhatsApp</h2>
+    <div class="q">
+      <p>Someone writes on WhatsApp or the website form. Who replies, and when do you type that order into this system?</p>
+      <span class="explain">The website has a “Quote request / Product inquiry” form. It does not create a sale by itself today.</span>
+      <input type="text" name="inquiry_flow" placeholder="e.g. reception replies on WhatsApp; we type the sale when they pay a deposit">
+    </div>
+    <div class="q">
+      <p>Should the public website show “in stock” / “out of stock”?</p>
+      <span class="explain">Today furniture is “request a quote” and bags show a price, but neither shows how many you have left.</span>
+      <div class="opts col">
+        <label><input type="radio" name="livestock" value="no"> No — keep asking people to call / WhatsApp</label>
+        <label><input type="radio" name="livestock" value="later"> Later — not needed for the first version</label>
+        <label><input type="radio" name="livestock" value="launch"> Yes — the website must show stock from day one</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>If you change a bag price in the shop computer, should the website change by itself?</p>
+      <div class="opts">
+        <label><input type="radio" name="autoweb" value="yes"> Yes — website must follow the shop</label>
+        <label><input type="radio" name="autoweb" value="no"> No — we will edit the website ourselves</label>
+      </div>
+    </div>
+    <div class="q">
+      <p>Does the website show the same things you actually sell in Eldoret?</p>
+      <span class="explain">The site has many furniture photos. Some pages may be old, or you may sell a sofa in the showroom that was never photographed.</span>
+      <div class="opts col">
+        <label><input type="radio" name="catalog_gap" value="match"> Yes — website and shop match</label>
+        <label><input type="radio" name="catalog_gap" value="shop_extra"> We sell some things in the shop that are not on the website</label>
+        <label><input type="radio" name="catalog_gap" value="web_extra"> Some website photos are old / not in the shop now</label>
+        <label><input type="radio" name="catalog_gap" value="both"> Both — shop extras and old website photos</label>
+      </div>
+    </div>
+
+    <h2>8. Launch</h2>
+    <div class="grid-2">
+      <div class="q">
+        <p>Target go-live month</p>
+        <input type="text" name="golive">
+      </div>
+      <div class="q">
+        <p>Can you run the old way in parallel for 2 weeks?</p>
+        <div class="opts">
+          <label><input type="radio" name="parallel" value="yes"> Yes</label>
+          <label><input type="radio" name="parallel" value="difficult"> Difficult</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Starting stock list we can import?</p>
+        <div class="opts col">
+          <label><input type="radio" name="import" value="excel"> Excel we can send</label>
+          <label><input type="radio" name="import" value="type"> We will type it in</label>
+          <label><input type="radio" name="import" value="count"> No list — we will count first</label>
+        </div>
+      </div>
+      <div class="q">
+        <p>Internet at the shop</p>
+        <div class="opts col">
+          <label><input type="radio" name="net" value="always"> Always on</label>
+          <label><input type="radio" name="net" value="drops"> Sometimes drops</label>
+          <label><input type="radio" name="net" value="offline"> Must work offline</label>
+        </div>
+      </div>
+    </div>
+    <div class="q">
+      <p>Who in the company will be the internal champion (password resets, first questions)?</p>
+      <input type="text" name="champion">
+    </div>
+    <div class="q">
+      <p>What must not break in month one?</p>
+      <input type="text" name="must_not_break" placeholder="e.g. printed invoice for churches, M-Pesa record, daily sales total">
+    </div>
+
+    <h2>9. If we only did three things for launch</h2>
+    <p class="hint" style="margin-bottom:6px;">These three override everything else. Number them in order.</p>
+    <table>
+      <thead><tr><th style="width:8%">#</th><th>Must have at launch</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><input type="text" name="top1"></td></tr>
+        <tr><td>2</td><td><input type="text" name="top2"></td></tr>
+        <tr><td>3</td><td><input type="text" name="top3"></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Please attach if you have them</h2>
+    <div class="opts">
+      <label><input type="checkbox" name="attach" value="invoice"> A recent customer invoice / receipt</label>
+      <label><input type="checkbox" name="attach" value="supplier"> A supplier delivery note or invoice</label>
+      <label><input type="checkbox" name="attach" value="stock"> Current stock list (Excel or photo)</label>
+      <label><input type="checkbox" name="attach" value="quote"> Sample quotation you send on WhatsApp</label>
+    </div>
+
+    <footer class="doc">
+      FRACA SERVCOM inventory system — discovery form. Return to Philip Lee. For the meeting: walk through one real sale and one real delivery from last week.
+    </footer>
+  </form>
+
+  <section id="plan" class="plan-sheet">
+    <header class="form-head">
+      <div>
+        <h1>What to start developing</h1>
+        <p class="sub">Generated from the questionnaire vs what the inventory system already does.</p>
+        <p class="sub" id="plan-meta"></p>
+      </div>
+    </header>
+    <p class="note">Work top to bottom. Do not start “later” or “hold” items until launch items are usable in the shop. The client’s three priorities in section 9 come first.</p>
+    <div id="plan-body"></div>
+    <footer class="doc">Internal briefing — not for the client. Print this page separately if you need a PDF of the plan.</footer>
+  </section>
+
+  <script>
+    const form = document.getElementById("questionnaire");
+
+    function collect() {
+      const data = {};
+      const fd = new FormData(form);
+      for (const [key, value] of fd.entries()) {
+        const el = form.elements[key];
+        const multi = el && (el instanceof RadioNodeList
+          ? [...el].some((n) => n.type === "checkbox")
+          : el.type === "checkbox");
+        if (multi) {
+          if (!Array.isArray(data[key])) data[key] = [];
+          data[key].push(value);
+        } else {
+          data[key] = value;
+        }
+      }
+      form.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+        if (!data[cb.name]) data[cb.name] = [];
+      });
+      return data;
+    }
+
+    function has(data, key, value) {
+      const v = data[key];
+      if (Array.isArray(v)) return v.includes(value);
+      return v === value;
+    }
+
+    function saveAnswers() {
+      const blob = new Blob([JSON.stringify(collect(), null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "fraca-questionnaire-answers.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById("load-file").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          applyAnswers(JSON.parse(reader.result));
+        } catch {
+          alert("That file is not valid answers JSON.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    function applyAnswers(data) {
+      form.reset();
+      Object.entries(data).forEach(([key, value]) => {
+        const els = form.elements[key];
+        if (!els) return;
+        const list = els instanceof RadioNodeList ? [...els] : [els];
+        list.forEach((el) => {
+          if (el.type === "checkbox") el.checked = [].concat(value).includes(el.value);
+          else if (el.type === "radio") el.checked = el.value === value;
+          else el.value = value == null ? "" : value;
+        });
+      });
+    }
+
+    function printForm() {
+      document.body.classList.add("print-form-only");
+      document.body.classList.remove("print-plan-only");
+      window.print();
+    }
+
+    function printPlan() {
+      if (!document.getElementById("plan").classList.contains("visible")) generatePlan();
+      document.body.classList.add("print-plan-only");
+      document.body.classList.remove("print-form-only");
+      window.print();
+    }
+
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("print-form-only", "print-plan-only");
+    });
+
+    function item(bucket, badge, title, detail) {
+      return { bucket, badge, title, detail };
+    }
+
+    function buildPlan(d) {
+      const launch = [];
+      const have = [];
+      const later = [];
+      const hold = [];
+      const gaps = [];
+
+      const answered = Object.entries(d).filter(([k, v]) => {
+        if (Array.isArray(v)) return v.length > 0;
+        return String(v || "").trim() !== "";
+      }).length;
+      if (answered < 8) {
+        gaps.push(item("gaps", "hold", "Questionnaire is mostly empty",
+          "Enter the client’s ticks first (or load a saved answers file), then generate again. Do not start new modules from guesswork."));
+      }
+
+      launch.push(item("launch", "launch", "Make the current system safe for staff",
+        "Before new features: lock API permissions to Admin/Manager/Staff, turn off public registration, replace demo logins, HTTPS, and daily database backups. The shop cannot go live without this."));
+
+      have.push(item("have", "have", "Sales, purchases, stock, customers, suppliers, products",
+        "Already built. Launch work is training + real product/stock data, not rebuilding these screens."));
+      have.push(item("have", "have", "Website catalog is furniture + bags only",
+        "fracaservcom.co.ke has two divisions. Photos/names can be imported. Furniture = quote; bags = listed prices. Hardware is not on the site."));
+      have.push(item("have", "have", "Three roles: Admin, Manager, Staff",
+        "Assign people from section 1. Only named people should change prices, delete sales, or create users."));
+      have.push(item("have", "have", "Cash / card / M-Pesa on a sale",
+        "M-Pesa is stored as “transfer”. Confirm Till vs Paybill in training. Add a reference-code field if they said codes must be recorded."));
+
+      if (has(d, "locations", "workshop") || has(d, "locations", "godown") || has(d, "locations", "branch")) {
+        const notes = (d.locations_notes || "").toLowerCase();
+        const split = notes.includes("yes");
+        (split ? launch : later).push(item(split ? "launch" : "later", split ? "launch" : "later",
+          "Stock per location + transfers",
+          "They have more than one place with stock. The app is one pile today. If each site must have its own count, this is a launch module; if not, keep one warehouse and wait."));
+      }
+
+      if (d.sold_when === "delivery") {
+        launch.push(item("launch", "launch", "Sale vs delivery (stock drops when goods leave)",
+          "Today stock drops when the sale is recorded. They want it to drop on delivery — add a delivery/complete step."));
+      } else if (d.sold_when === "pay" || d.sold_when === "invoice") {
+        have.push(item("have", "have", "Stock drops when the sale is saved",
+          "Matches “sold when we pay / write the invoice”. Keep this unless they change their mind."));
+      }
+
+      if (d.deposit === "often") {
+        launch.push(item("launch", "launch", "Deposits and balance due",
+          "Furniture/church work usually needs this. Not in the app today. Sale should allow part-paid, remaining balance, and goods held or released."));
+      } else if (d.deposit === "sometimes") {
+        later.push(item("later", "later", "Deposits",
+          "Useful but they said “sometimes”. A notes field can cover launch unless section 9 lists it."));
+      }
+
+      if (d.credit === "yes" || d.leave === "credit") {
+        launch.push(item("launch", "launch", "Credit sales and customer balances",
+          "Customer credit-limit fields exist; there is no real credit ledger or ageing. Churches/offices buying on terms need this."));
+      } else if (d.credit === "rarely") {
+        later.push(item("later", "later", "Credit sales ledger", "Rare — do not block launch."));
+      }
+
+      if (d.quote === "system") {
+        launch.push(item("launch", "launch", "Quotations (then convert to a sale)",
+          "Not built. Needed if they ticked “must be in the system”."));
+      } else if (d.quote === "paper") {
+        later.push(item("later", "later", "Quotations in the system",
+          "Keep WhatsApp/paper quotes for launch. Convert manually into a sale."));
+      }
+
+      if (has(d, "docs", "etims")) {
+        hold.push(item("hold", "hold", "KRA eTIMS tax invoices",
+          "Legal/tax integration. Do not start this as the first coding task. Use a printable invoice at launch, then eTIMS with their accountant. If it is in their top 3, schedule a specialist slice after core sales work."));
+      }
+      if (has(d, "docs", "a4") || has(d, "docs", "pdf")) {
+        launch.push(item("launch", "launch", "Printable / PDF invoice (A4)",
+          "dompdf is installed but unused. This is the usual first customer-facing output."));
+      }
+      if (has(d, "docs", "thermal")) {
+        later.push(item("later", "later", "Thermal receipt layout",
+          "Separate from A4. Add after A4 invoice unless the counter only has a small printer."));
+      }
+
+      if (d.vat === "all" || d.vat === "mixed") {
+        launch.push(item("launch", "launch", "VAT 16% on sales" + (d.vat === "mixed" ? " (and exempt items)" : ""),
+          "Tax amount columns exist but are not a real VAT setup. Confirm with their accountant before coding rates."));
+      }
+
+      if ((d.mpesa_codes || "").toLowerCase().includes("yes") || has(d, "payments", "till") || has(d, "payments", "paybill")) {
+        later.push(item("later", "later", "M-Pesa / bank reference on each sale",
+          "Small field. Promote to launch if they said codes are required."));
+        if ((d.mpesa_codes || "").toLowerCase().includes("yes")) {
+          launch.push(item("launch", "launch", "Payment reference code on the sale",
+            "They asked to record Till/Paybill/bank codes. Add a required field when payment is not cash."));
+        }
+      }
+
+      if (d.discounts && d.discounts.trim()) {
+        later.push(item("later", "later", "Discount permission / cap",
+          "They described a discount rule: “" + d.discounts.trim() + "”. Staff can already change line prices — enforce a cap and who may discount."));
+      }
+
+      const lineNames = {
+        furniture_home: "home furniture",
+        furniture_office: "office furniture",
+        furniture_church: "church & school furniture",
+        bags: "bags",
+        hardware: "hardware (not on the website)"
+      };
+      const lines = [].concat(d.lines || []);
+      if (lines.length) {
+        have.push(item("have", "have", "Load catalog: " + lines.map((k) => lineNames[k] || k).join(", "),
+          "Website photos can be imported for furniture and bags. Furniture has no public prices (quote). Bags already have KSh prices on the site."));
+      }
+      if (d.first_line === "bags") {
+        launch.push(item("launch", "launch", "Load bags first",
+          "Smaller catalog with listed prices — good first data set, then furniture."));
+      } else if (d.first_line === "church") {
+        launch.push(item("launch", "launch", "Load church / school furniture first",
+          "Pews, pulpits, benches, link chairs — typical bulk orders from the website’s institutional range."));
+      } else if (d.first_line === "both") {
+        launch.push(item("launch", "launch", "Load furniture and bags together",
+          "Plan enough time for opening stock on both divisions."));
+      } else if (d.first_line === "furniture") {
+        launch.push(item("launch", "launch", "Load furniture first, bags later",
+          "Matches the larger showroom catalog (home + office). Bags can follow."));
+      }
+      if (has(d, "lines", "hardware")) {
+        later.push(item("later", "later", "Hardware / building supplies",
+          "Not on fracaservcom.co.ke. Only build this if they really sell it in the shop."));
+      }
+
+      if (d.mto === "job" || d.mto === "mix") {
+        (d.mto === "job" ? launch : later).push(item(d.mto === "job" ? "launch" : "later", d.mto === "job" ? "launch" : "later",
+          "Made-to-order jobs (not only shelf stock)",
+          "An “in-house” product flag exists. That is not a job with deposit, due date, and “not in stock until finished”."));
+      }
+      if (d.bom === "launch") {
+        launch.push(item("launch", "launch", "Materials bill (timber, foam, fabric)",
+          "Do this only if they manufacture and ticked “needed at launch”. It is a bigger module than finished-goods stock."));
+      } else if (d.bom === "later") {
+        later.push(item("later", "later", "Materials / bill of materials", "Finished goods only at launch."));
+      }
+
+      if (d.all_lines === "no") {
+        later.push(item("later", "later", "Furniture staff vs bags staff",
+          "Not built. Roles today are Admin/Manager/Staff, not Furniture vs Bags."));
+      }
+
+      if (d.oversell === "yes") {
+        later.push(item("later", "later", "Backorders (sell when not on the shelf)",
+          "Today overselling should be blocked. Allow pending sales only if they need it often."));
+      } else if (d.oversell === "no") {
+        have.push(item("have", "have", "Do not sell below stock", "Keep the current rule. Train staff on it."));
+      }
+
+      if (d.serial === "yes") {
+        later.push(item("later", "later", "Serial / one-off piece tracking",
+          "Quantities only today. Needed for unique desks/pulpits if they insist."));
+      }
+      if (d.scan === "launch") {
+        launch.push(item("launch", "launch", "Barcode scan at the counter",
+          "Barcode field exists; there is no scanner workflow. Name search can launch if the top 3 does not include scanning."));
+      } else if (d.scan === "later" || d.scan === "name") {
+        have.push(item("have", "have", "Find products by name / SKU", "Scanner can wait. Barcode column is already on the product."));
+      }
+
+      const whoAlert = [].concat(d.lowstock_who || []);
+      if (whoAlert.length || d.lowstock_how) {
+        const who = whoAlert.length ? whoAlert.join(", ") : "not named";
+        if (d.lowstock_how === "whatsapp" || d.lowstock_how === "email") {
+          later.push(item("later", "later", "Low-stock WhatsApp / email to " + who,
+            "The dashboard already shows low stock on screen. Messages are not built — keep the screen for launch unless this is in their top 3."));
+        } else {
+          have.push(item("have", "have", "Low-stock on the computer screen (" + who + ")",
+            "Already on the dashboard. Train the people they named."));
+        }
+      }
+
+      const ret = [].concat(d.returns || []);
+      if (ret.includes("refund") || ret.includes("exchange") || ret.includes("restock")) {
+        if (!ret.includes("rare")) {
+          later.push(item("later", "later", "Returns / credit notes",
+            "No returns module. Use a negative sale or stock adjustment at launch if returns are uncommon."));
+        }
+      }
+
+      if (d.named === "walkin") {
+        have.push(item("have", "have", "Walk-in sales without a full customer record",
+          "Customer on a sale can be empty. Create one “Walk-in” customer if they prefer a name on every invoice."));
+      }
+      if (has(d, "cust_fields", "kra")) {
+        later.push(item("later", "later", "KRA PIN on the customer (and invoice)",
+          "Needed if they invoice companies/churches for tax. Add with VAT work."));
+      }
+
+      if (d.po === "orders") {
+        later.push(item("later", "later", "Purchase orders (order now, receive later)",
+          "Today a purchase immediately adds stock. Split “ordered” vs “received” only if they buy ahead often."));
+      } else if (d.po === "receive") {
+        have.push(item("have", "have", "Record a purchase when goods arrive", "Matches current purchases."));
+      }
+
+      if (d.cost === "no" || d.cost === "managers") {
+        launch.push(item("launch", "launch", "Hide cost price from Staff",
+          "They do not want salespeople seeing margin. Hide it on screens and on the API (API is not permission-safe yet)."));
+      }
+
+      if (d.cashup === "launch") {
+        launch.push(item("launch", "launch", "End-of-day cash-up",
+          "Compare expected cash + M-Pesa to the drawer. Not built."));
+      } else if (d.cashup === "later") {
+        later.push(item("later", "later", "End-of-day cash-up", "Owner can read the sales report at launch."));
+      }
+
+      if (has(d, "reports", "sales") || has(d, "reports", "stock") || has(d, "reports", "low") || has(d, "reports", "profit")) {
+        have.push(item("have", "have", "Reports: sales, stock, valuation, profit/loss",
+          "Already in the reports page. Confirm they match what the owner wants each morning. CSV export exists; PDF reports do not."));
+      }
+      if (has(d, "reports", "customer")) {
+        later.push(item("later", "later", "Customer purchase history statement",
+          "Useful for churches/companies. Can start from the customer screen; may need a proper statement."));
+      }
+
+      if (d.books === "replace") {
+        hold.push(item("hold", "hold", "Full accounting replacement",
+          "This system is inventory + sales, not a full set of books. Export for the accountant unless they later fund a proper accounts module."));
+      } else if (d.books === "feed") {
+        have.push(item("have", "have", "CSV export for the accountant", "Use existing report exports. Do not rebuild Sage/Excel."));
+      }
+
+      if (d.livestock === "launch") {
+        hold.push(item("hold", "hold", "Live stock on fracaservcom.co.ke",
+          "Website and inventory must stay separate until inventory APIs are locked down. A public read-only “in stock” flag is a later project, not week one — unless it is literally their #1 and they accept the extra time."));
+      } else if (d.livestock === "later") {
+        later.push(item("later", "later", "Live stock on the website", "Keep “contact us” on the site for launch."));
+      } else if (d.livestock === "no") {
+        have.push(item("have", "have", "Website stays a catalog + contact form",
+          "Correct. Inventory imports photos/names; it does not drive the public site live."));
+      }
+
+      if (d.autoweb === "yes" || d.webprice === "match") {
+        later.push(item("later", "later", "Shop bag price → website price",
+          "Bags already list KSh on the site. Furniture stays quote-only unless they change that. Sync is not automatic today."));
+      }
+
+      if (d.catalog_gap === "shop_extra" || d.catalog_gap === "both") {
+        have.push(item("have", "have", "Shop has items not on the website",
+          "Type those extra products into inventory by hand. Do not wait for the website."));
+      }
+      if (d.catalog_gap === "web_extra" || d.catalog_gap === "both") {
+        later.push(item("later", "later", "Website photos that are not in the shop",
+          "Inventory should not import discontinued website items as live stock. Filter the catalog import."));
+      }
+
+      if (has(d, "orders_from", "whatsapp") || has(d, "orders_from", "website")) {
+        later.push(item("later", "later", "Inquiry → customer → sale",
+          "Website contact form does not create inventory customers. Staff copy WhatsApp/web leads in by hand at launch. Flow they described: " + (d.inquiry_flow || "(blank)")));
+      }
+
+      if (d.import === "excel") {
+        launch.push(item("launch", "launch", "Import opening stock from Excel",
+          "They have a list. Build or use a one-off import rather than typing hundreds of rows."));
+      } else if (d.import === "count") {
+        launch.push(item("launch", "launch", "Stock-take / opening balances",
+          "No list yet. Launch includes a count, then enter or import quantities. Do not go live with demo/catalog quantities."));
+      } else if (d.import === "type") {
+        have.push(item("have", "have", "Type products in by hand", "Fine for a small catalog. Use the existing product screens."));
+      }
+
+      if (d.net === "offline") {
+        hold.push(item("hold", "hold", "Works fully offline",
+          "Laravel needs the internet (or a local server on the shop PC). Offline-first is a different product. Offer a shop PC with the system installed locally, or wait."));
+      } else if (d.net === "drops") {
+        later.push(item("later", "later", "Unreliable internet",
+          "Warn them: a mid-sale drop will fail. Consider a small office PC hosting the app on the LAN."));
+      }
+
+      const tops = [d.top1, d.top2, d.top3].map((t) => (t || "").trim()).filter(Boolean);
+      if (tops.length) {
+        launch.unshift(item("launch", "launch", "Client top 3 — start here",
+          tops.map((t, i) => (i + 1) + ". " + t).join(" · ") +
+          (d.must_not_break ? "  Must not break: " + d.must_not_break : "") +
+          (d.golive ? "  Target: " + d.golive : "")));
+      } else {
+        gaps.push(item("gaps", "hold", "No top 3 listed",
+          "Ask them to fill section 9. Without it, default launch is: safe logins, products + opening stock, record sale, record purchase, printable invoice."));
+      }
+
+      if (d.champion) {
+        have.push(item("have", "have", "Internal champion: " + d.champion,
+          "Train this person first. They own password resets, not the developer."));
+      }
+
+      return { launch, have, later, hold, gaps, d };
+    }
+
+    function renderGroup(title, items, emptyText) {
+      const h = "<h2>" + title + "</h2>";
+      if (!items.length) return h + "<p class=\"empty\">" + emptyText + "</p>";
+      return h + items.map((it) =>
+        "<div class=\"item\"><h3><span class=\"badge " + it.badge + "\">" + it.badge + "</span>" +
+        it.title + "</h3><p>" + it.detail + "</p></div>"
+      ).join("");
+    }
+
+    function generatePlan() {
+      const d = collect();
+      const plan = buildPlan(d);
+      const who = [d.respondent, d.role].filter(Boolean).join(" · ") || "Respondent not named";
+      document.getElementById("plan-meta").textContent =
+        who + (d.filled_date ? " · " + d.filled_date : "") +
+        (d.golive ? " · go-live " + d.golive : "");
+      document.getElementById("plan-body").innerHTML =
+        renderGroup("Start developing (launch)", plan.launch, "Nothing mapped — fill more of the form.") +
+        renderGroup("Already in the system — configure, do not rebuild", plan.have, "None tagged.") +
+        renderGroup("After launch", plan.later, "None.") +
+        renderGroup("Do not start yet", plan.hold, "None.") +
+        renderGroup("Still need an answer", plan.gaps, "Enough to proceed.");
+      document.getElementById("plan").classList.add("visible");
+      document.getElementById("print-plan-btn").hidden = false;
+      document.getElementById("plan").scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>

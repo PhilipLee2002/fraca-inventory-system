@@ -26,9 +26,9 @@ class AuthController extends BaseController
             }
 
             $user = User::where('email', $request->email)->firstOrFail();
-            
-            // Check if user is active
-            if (isset($user->status) && $user->status === 'inactive') {
+
+            if (! $user->isActive()) {
+                Auth::logout();
                 return $this->sendError('Account is deactivated', [], 403);
             }
 

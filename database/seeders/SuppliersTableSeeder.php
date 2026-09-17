@@ -2,37 +2,21 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Supplier;
+use Illuminate\Database\Seeder;
 
 class SuppliersTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    public function run(): void
     {
-        $suppliers = [
+        Supplier::updateOrCreate(
+            ['email' => 'purchasing@fracaservcomltd.co.ke'],
             [
-                'name' => 'Tech Supplies Inc.',
-                'contact_person' => 'John Doe',
-                'email' => 'john@techsupplies.com',
-                'phone' => '123-456-7890',
-                'address' => '123 Tech Street, City'
-            ],
-            [
-                'name' => 'Office World',
-                'contact_person' => 'Jane Smith',
-                'email' => 'jane@officeworld.com',
-                'phone' => '987-654-3210',
-                'address' => '456 Office Ave, Town'
-            ],
-        ];
-        
-        foreach ($suppliers as $supplier) {
-            Supplier::create($supplier);
-        }
+                'name' => 'External vendor',
+                'contact_person' => 'Purchasing',
+                'phone' => '+254725151495',
+                'address' => 'Musco Towers, Eldoret',
+            ]
+        );
     }
-    
 }

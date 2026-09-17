@@ -50,6 +50,7 @@
                         'name'  => $u->name,
                         'email' => $u->email,
                         'role'  => $r ? $r->name : null,
+                        'can_see_cost' => $u->canSeeCost(),
                     ]);
                 } else {
                     echo 'null';

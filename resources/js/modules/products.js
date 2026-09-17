@@ -92,14 +92,17 @@ export class ProductsModule {
         if (!el) return;
         const current = el.value;
         el.innerHTML = '<option value="">' + placeholder + '</option>' +
-            items.map(i => '<option value="' + i.id + '">' + this.esc(i.name) + '</option>').join('');
+            items.map(i => {
+                const label = i.group ? i.group + ' — ' + i.name : i.name;
+                return '<option value="' + i.id + '">' + this.esc(label) + '</option>';
+            }).join('');
         if (current) el.value = current;
     }
 
     async loadProducts() {
         const tbody = document.getElementById('products-tbody');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
         const params = {
             page:        this.currentPage,
             per_page:    20,
@@ -114,7 +117,7 @@ export class ProductsModule {
             this.renderTable(products);
             this.renderPagination(pagination);
         } catch {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Failed to load products.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Failed to load products.</td></tr>';
         }
     }
 
@@ -123,7 +126,7 @@ export class ProductsModule {
         const canEdit = window.utils?.hasAnyPermission(['edit-product', 'create-product']);
         const canDel  = window.utils?.hasAnyPermission(['delete-product', 'create-product']);
         if (!products.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-box-open me-2"></i>No products found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-box-open me-2"></i>No products found.</td></tr>';
             return;
         }
         tbody.innerHTML = products.map(p => {
@@ -132,7 +135,11 @@ export class ProductsModule {
             const inHouse = p.is_in_house ? '<span class="badge bg-info ms-1" title="Made in-house">In-house</span>' : '';
             const editBtn = canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="' + p.id + '"><i class="fas fa-pencil-alt"></i></button>' : '';
             const delBtn  = canDel  ? '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="' + p.id + '" data-name="' + this.esc(p.name) + '"><i class="fas fa-trash"></i></button>' : '';
+            const thumb   = p.image_url
+                ? '<img src="' + this.esc(p.image_url) + '" alt="" width="40" height="40" class="rounded" style="width:40px;height:40px;object-fit:cover">'
+                : '<span class="text-muted">—</span>';
             return '<tr>' +
+                '<td>' + thumb + '</td>' +
                 '<td><code class="small">' + this.esc(p.sku) + '</code></td>' +
                 '<td>' + this.esc(p.name) + inHouse + '</td>' +
                 '<td>' + this.esc(p.category?.name ?? '---') + '</td>' +
@@ -184,13 +191,16 @@ export class ProductsModule {
 
         if (this.filtersPromise) await this.filtersPromise;
 
+        this.updateImagePreview(product?.image_url ?? '');
+
         if (product) {
             document.getElementById('product-name').value          = product.name ?? '';
             document.getElementById('product-sku').value           = product.sku ?? '';
             document.getElementById('product-barcode').value       = product.barcode ?? '';
             document.getElementById('product-description').value   = product.description ?? '';
+            document.getElementById('product-image').value         = product.image ?? '';
             document.getElementById('product-category').value      = product.category_id ?? '';
-            document.getElementById('product-cost-price').value    = product.cost_price ?? '';
+            document.getElementById('product-cost-price') && (document.getElementById('product-cost-price').value = product.cost_price ?? '');
             document.getElementById('product-selling-price').value = product.selling_price ?? '';
             document.getElementById('product-quantity').value      = product.current_stock ?? '';
             document.getElementById('product-reorder-level').value = product.reorder_level ?? '';
@@ -228,14 +238,18 @@ export class ProductsModule {
             sku:           document.getElementById('product-sku').value.trim(),
             barcode:       document.getElementById('product-barcode').value.trim() || null,
             description:   document.getElementById('product-description').value.trim() || null,
+            image:         document.getElementById('product-image').value.trim() || null,
             category_id:   document.getElementById('product-category').value || null,
             supplier_id:   isInHouse ? null : (document.getElementById('product-supplier').value || null),
-            cost_price:    parseFloat(document.getElementById('product-cost-price').value) || 0,
             selling_price: parseFloat(document.getElementById('product-selling-price').value),
             current_stock: parseInt(document.getElementById('product-quantity').value),
             reorder_level: parseInt(document.getElementById('product-reorder-level').value),
             is_in_house:   isInHouse,
         };
+        const costInput = document.getElementById('product-cost-price');
+        if (costInput && window.appData?.user?.can_see_cost) {
+            payload.cost_price = parseFloat(costInput.value) || 0;
+        }
 
         btn.disabled = true;
         spinner.classList.remove('d-none');
@@ -308,6 +322,18 @@ export class ProductsModule {
                 skuField.value = prefix + '-' + String(count + 1).padStart(3, '0');
         } catch {
             if (skuField.dataset.manuallyEdited !== 'true') skuField.value = prefix + '-001';
+        }
+    }
+
+    updateImagePreview(url) {
+        const preview = document.getElementById('product-image-preview');
+        if (!preview) return;
+        if (url) {
+            preview.src = url;
+            preview.classList.remove('d-none');
+        } else {
+            preview.removeAttribute('src');
+            preview.classList.add('d-none');
         }
     }
 

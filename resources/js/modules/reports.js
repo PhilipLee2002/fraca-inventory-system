@@ -164,20 +164,24 @@ export class ReportsModule {
         const summary = data?.summary ?? {};
         this.renderSummaryCards([
             { label: 'Confirmed Revenue',  value: window.formatKES(summary.total_sales ?? 0),        icon: 'fa-check-circle', color: 'success' },
+            { label: 'Cash',               value: window.formatKES(summary.by_payment_method?.cash ?? 0), icon: 'fa-money-bill', color: 'success' },
+            { label: 'M-Pesa',             value: window.formatKES(summary.by_payment_method?.mpesa ?? 0), icon: 'fa-mobile-alt', color: 'info' },
+            { label: 'Bank',               value: window.formatKES(summary.by_payment_method?.bank ?? 0), icon: 'fa-university', color: 'primary' },
             { label: 'Pending Revenue',    value: window.formatKES(summary.pending_revenue ?? 0),     icon: 'fa-clock',        color: 'warning' },
             { label: 'Transactions',       value: summary.total_transactions ?? 0,                    icon: 'fa-receipt',      color: 'primary' },
-            { label: 'Avg Sale Value',     value: window.formatKES(summary.average_sale_value ?? 0),  icon: 'fa-chart-bar',    color: 'info' },
         ]);
 
         const tbody = document.getElementById('tbody-sales');
-        if (!sales.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No data.</td></tr>'; return; }
+        if (!sales.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No data.</td></tr>'; return; }
         tbody.innerHTML = sales.map(s => {
             const customer = s.customer ? ((s.customer.first_name ?? '') + ' ' + (s.customer.last_name ?? '')).trim() : '—';
             const statusCls = s.status === 'completed' ? 'bg-success' : s.status === 'cancelled' ? 'bg-danger' : 'bg-warning text-dark';
+            const pay = s.payment_method === 'transfer' ? 'M-Pesa' : (s.payment_method === 'bank' ? 'Bank' : (s.payment_method ?? '—'));
             return '<tr>' +
                 '<td><code class="small">' + this.esc(s.invoice_number) + '</code></td>' +
                 '<td>' + this.esc(customer) + '</td>' +
                 '<td>' + (s.sale_date ?? '—') + '</td>' +
+                '<td>' + this.esc(pay) + (s.reference_number ? '<br><small class="text-muted">' + this.esc(s.reference_number) + '</small>' : '') + '</td>' +
                 '<td class="text-end">' + window.formatKES(s.total_amount ?? 0) + '</td>' +
                 '<td class="text-center"><span class="badge ' + statusCls + '">' + s.status + '</span></td>' +
                 '</tr>';
@@ -321,9 +325,9 @@ export class ReportsModule {
                 const rows = (this.lastData.sales?.data ?? []).map(s => [
                     s.invoice_number,
                     s.customer ? ((s.customer.first_name ?? '') + ' ' + (s.customer.last_name ?? '')).trim() : '',
-                    s.sale_date, s.total_amount, s.status,
+                    s.sale_date, s.payment_method === 'transfer' ? 'M-Pesa' : (s.payment_method ?? ''), s.reference_number ?? '', s.total_amount, s.status,
                 ]);
-                exportToCSV(['Invoice #','Customer','Date','Amount','Status'], rows, 'sales-report');
+                exportToCSV(['Invoice #','Customer','Date','Payment','Reference','Amount','Status'], rows, 'sales-report');
                 break;
             }
             case 'profit-loss': {

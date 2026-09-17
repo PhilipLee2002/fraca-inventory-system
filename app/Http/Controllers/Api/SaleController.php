@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Http\Requests\UpdateSaleRequest;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Product;
-use App\Models\StockHistory;
-use App\Models\Alert;
+use App\Services\SaleStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 class SaleController extends BaseController
 {
+    public function __construct(private SaleStockService $stock)
+    {
+    }
+
     /**
      * Display a listing of sales.
      */
@@ -20,32 +24,44 @@ class SaleController extends BaseController
         try {
             $query = Sale::with(['customer', 'items.product']);
 
-            // Apply filters
-            if ($request->has('customer_id')) {
+            if ($request->filled('customer_id')) {
                 $query->where('customer_id', $request->customer_id);
             }
 
-            if ($request->has('status')) {
+            if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $query->whereBetween('sale_date', [
-                    $request->start_date,
-                    $request->end_date
-                ]);
+            $from = $request->input('start_date', $request->input('date_from'));
+            $to = $request->input('end_date', $request->input('date_to'));
+            if ($from) {
+                $query->whereDate('sale_date', '>=', $from);
+            }
+            if ($to) {
+                $query->whereDate('sale_date', '<=', $to);
             }
 
-            // Apply sorting
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('invoice_number', 'like', "%{$search}%")
+                        ->orWhere('reference_number', 'like', "%{$search}%")
+                        ->orWhereHas('customer', function ($customer) use ($search) {
+                            $customer->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                });
+            }
+
             $query->orderBy('sale_date', 'desc')
-                  ->orderBy('created_at', 'desc');
+                ->orderBy('created_at', 'desc');
 
             $sales = $query->paginate($request->get('per_page', 20));
+            $this->hideNestedSaleCosts($sales);
 
             return $this->sendPaginated($sales, 'Sales retrieved successfully');
-
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving sales: ' . $e->getMessage());
+            return $this->sendError('Error retrieving sales: '.$e->getMessage());
         }
     }
 
@@ -57,125 +73,79 @@ class SaleController extends BaseController
         try {
             DB::beginTransaction();
 
-            $items         = $request->input('items');
-            $customerId    = $request->input('customer_id') ?: null;
-            $saleDate      = $request->input('sale_date');
-            $paymentMethod = $request->input('payment_method', 'cash');
-            $notes         = $request->input('notes');
-            $status        = $request->input('status', 'pending');
+            $items = $request->input('items');
+            $status = $request->input('status', 'pending');
+            $completed = $this->stock->isCompleted($status);
 
-            // VALIDATION: Check stock FIRST
-            foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
-                if (!$product || $product->current_stock < $item['quantity']) {
-                    throw new \Exception(
-                        "Insufficient stock for product: " . ($product->name ?? 'Unknown')
-                    );
-                }
+            if ($completed) {
+                $this->stock->assertAvailable($items);
             }
 
-            // Calculate total amount
             $totalAmount = 0;
             foreach ($items as $item) {
                 $totalAmount += $item['quantity'] * $item['unit_price'];
             }
 
-            // Create sale
             $sale = Sale::create([
-                'customer_id' => $customerId ?: null,
+                'customer_id' => $request->input('customer_id') ?: null,
                 'user_id' => auth()->id(),
-                'invoice_number' => 'INV-' . date('YmdHis'),
-                'sale_date' => $saleDate,
+                'invoice_number' => 'INV-'.date('YmdHis'),
+                'sale_date' => $request->input('sale_date'),
                 'total_amount' => $totalAmount,
-                'payment_method' => $paymentMethod,
+                'payment_method' => $request->input('payment_method', 'cash'),
+                'reference_number' => $request->input('reference_number'),
                 'status' => $status,
-                'notes' => $notes,
+                'payment_status' => $completed ? 'paid' : 'pending',
+                'notes' => $request->input('notes'),
             ]);
 
-            // Create sale items and update stock
             foreach ($items as $item) {
-                $itemTotal = $item['quantity'] * $item['unit_price'];
-                
                 SaleItem::create([
                     'sale_id' => $sale->id,
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
-                    'total' => $itemTotal,
+                    'total' => $item['quantity'] * $item['unit_price'],
                 ]);
+            }
 
-                // Update product stock (decrease)
-                $product = Product::find($item['product_id']);
-                $previousStock = $product->current_stock;
-                $product->decrement('current_stock', $item['quantity']);
-                $product->refresh();
-
-                // Create stock history record
-                StockHistory::create([
-                    'product_id'        => $item['product_id'],
-                    'quantity_change'   => -$item['quantity'],
-                    'previous_quantity' => $previousStock,
-                    'new_quantity'      => $previousStock - $item['quantity'],
-                    'transaction_type'  => 'sale',
-                    'reference_id'      => $sale->id,
-                    'reference_type'    => Sale::class,
-                    'notes'             => "Sale: {$sale->invoice_number}",
-                ]);
-
-                // Real-time stock alert
-                if ($product->current_stock === 0) {
-                    Alert::createForProduct($product, 'out_of_stock');
-                } elseif ($product->current_stock <= $product->reorder_level) {
-                    Alert::createForProduct($product, 'low_stock');
-                }
+            if ($completed) {
+                $this->stock->decrementFor($sale);
             }
 
             DB::commit();
 
             $sale->load(['customer', 'items.product']);
+            $this->hideNestedSaleCosts($sale);
 
             return $this->sendCreated($sale, 'Sale created successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('Error creating sale: ' . $e->getMessage());
+            return $this->sendError('Error creating sale: '.$e->getMessage());
         }
     }
 
     /**
      * Update an existing sale (replaces items, recalculates total, adjusts stock).
      */
-    public function update(Request $request, Sale $sale)
+    public function update(UpdateSaleRequest $request, Sale $sale)
     {
         try {
-            $request->validate([
-                'customer_id'        => 'nullable|exists:customers,id',
-                'sale_date'          => 'required|date',
-                'payment_method'     => 'nullable|in:cash,card,transfer',
-                'status'             => 'required|in:pending,completed,cancelled',
-                'notes'              => 'nullable|string',
-                'items'              => 'required|array|min:1',
-                'items.*.product_id' => 'required|exists:products,id',
-                'items.*.quantity'   => 'required|numeric|min:1',
-                'items.*.unit_price' => 'required|numeric|min:0',
-            ]);
-
             DB::beginTransaction();
 
-            // Reverse stock for old items
-            foreach ($sale->items as $oldItem) {
-                $oldItem->product->increment('current_stock', $oldItem->quantity);
+            $wasCompleted = $this->stock->isCompleted($sale->status);
+            if ($wasCompleted) {
+                $this->stock->incrementFor($sale, "Sale updated (stock restored): {$sale->invoice_number}");
             }
+
             $sale->items()->delete();
 
             $items = $request->input('items');
+            $status = $request->input('status');
+            $nowCompleted = $this->stock->isCompleted($status);
 
-            // Check stock for new items
-            foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
-                if (!$product || $product->current_stock < $item['quantity']) {
-                    throw new \Exception("Insufficient stock for: " . ($product->name ?? 'Unknown'));
-                }
+            if ($nowCompleted) {
+                $this->stock->assertAvailable($items);
             }
 
             $totalAmount = 0;
@@ -183,53 +153,38 @@ class SaleController extends BaseController
                 $totalAmount += $item['quantity'] * $item['unit_price'];
 
                 SaleItem::create([
-                    'sale_id'    => $sale->id,
+                    'sale_id' => $sale->id,
                     'product_id' => $item['product_id'],
-                    'quantity'   => $item['quantity'],
+                    'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
-                    'total'      => $item['quantity'] * $item['unit_price'],
+                    'total' => $item['quantity'] * $item['unit_price'],
                 ]);
-
-                $product = Product::find($item['product_id']);
-                $previousStock = $product->current_stock;
-                $product->decrement('current_stock', $item['quantity']);
-                $product->refresh();
-
-                StockHistory::create([
-                    'product_id'        => $item['product_id'],
-                    'quantity_change'   => -$item['quantity'],
-                    'previous_quantity' => $previousStock,
-                    'new_quantity'      => $previousStock - $item['quantity'],
-                    'transaction_type'  => 'sale',
-                    'reference_id'      => $sale->id,
-                    'reference_type'    => Sale::class,
-                    'notes'             => "Sale updated: {$sale->invoice_number}",
-                ]);
-
-                if ($product->current_stock === 0) {
-                    Alert::createForProduct($product, 'out_of_stock');
-                } elseif ($product->current_stock <= $product->reorder_level) {
-                    Alert::createForProduct($product, 'low_stock');
-                }
             }
 
             $sale->update([
-                'customer_id'    => $request->input('customer_id') ?: null,
-                'sale_date'      => $request->input('sale_date'),
+                'customer_id' => $request->input('customer_id') ?: null,
+                'sale_date' => $request->input('sale_date'),
                 'payment_method' => $request->input('payment_method', 'cash'),
-                'status'         => $request->input('status'),
-                'notes'          => $request->input('notes'),
-                'total_amount'   => $totalAmount,
+                'reference_number' => $request->input('reference_number'),
+                'status' => $status,
+                'payment_status' => $nowCompleted ? 'paid' : 'pending',
+                'notes' => $request->input('notes'),
+                'total_amount' => $totalAmount,
             ]);
+
+            if ($nowCompleted) {
+                $this->stock->decrementFor($sale->fresh('items.product'));
+            }
 
             DB::commit();
 
             $sale->load(['customer', 'items.product']);
-            return $this->sendUpdated($sale, 'Sale updated successfully');
+            $this->hideNestedSaleCosts($sale);
 
+            return $this->sendUpdated($sale, 'Sale updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('Error updating sale: ' . $e->getMessage());
+            return $this->sendError('Error updating sale: '.$e->getMessage());
         }
     }
 
@@ -244,11 +199,11 @@ class SaleController extends BaseController
                 'items.product',
                 'user:id,name',
             ]);
+            $this->hideNestedSaleCosts($sale);
 
             return $this->sendSuccess($sale, 'Sale retrieved successfully');
-
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving sale: ' . $e->getMessage());
+            return $this->sendError('Error retrieving sale: '.$e->getMessage());
         }
     }
 
@@ -259,28 +214,19 @@ class SaleController extends BaseController
     {
         try {
             DB::beginTransaction();
-            // Reverse stock for each item
-            foreach ($sale->items as $item) {
-                $previousStock = $item->product->current_stock;
-                $item->product->increment('current_stock', $item->quantity);
-                StockHistory::create([
-                    'product_id'        => $item->product_id,
-                    'quantity_change'   => $item->quantity,
-                    'previous_quantity' => $previousStock,
-                    'new_quantity'      => $previousStock + $item->quantity,
-                    'transaction_type'  => 'adjustment',
-                    'reference_id'      => $sale->id,
-                    'reference_type'    => Sale::class,
-                    'notes'             => "Sale deleted: {$sale->invoice_number}",
-                ]);
+
+            if ($this->stock->isCompleted($sale->status)) {
+                $this->stock->incrementFor($sale, "Sale deleted: {$sale->invoice_number}");
             }
+
             $sale->items()->delete();
             $sale->delete();
             DB::commit();
+
             return $this->sendDeleted('Sale deleted successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('Error deleting sale: ' . $e->getMessage());
+            return $this->sendError('Error deleting sale: '.$e->getMessage());
         }
     }
 
@@ -291,7 +237,7 @@ class SaleController extends BaseController
     {
         try {
             $request->validate([
-                'status' => 'required|in:completed,cancelled',
+                'status' => 'required|in:completed,cancelled,pending',
                 'notes' => 'nullable|string',
             ]);
 
@@ -300,38 +246,20 @@ class SaleController extends BaseController
             $oldStatus = $sale->status;
             $newStatus = $request->status;
 
-            // Handle stock reversal if cancelling a sale
-            if ($oldStatus === 'completed' && $newStatus === 'cancelled') {
-                foreach ($sale->items as $item) {
-                    $product = $item->product;
-                    $product->increment('stock_quantity', $item->quantity);
-
-                    // Create reversal stock history
-                    StockHistory::create([
-                        'product_id' => $item->product_id,
-                        'quantity' => $item->quantity, // Positive for reversal
-                        'type' => 'adjustment',
-                        'reference_type' => Sale::class,
-                        'reference_id' => $sale->id,
-                        'notes' => "Sale cancelled: {$sale->invoice_number}",
-                        'created_by' => auth()->id(),
-                    ]);
-                }
-            }
+            $this->stock->syncStatusChange($sale, $oldStatus, $newStatus);
 
             $sale->update([
                 'status' => $newStatus,
-                'notes' => $sale->notes . "\nStatus changed: {$oldStatus} -> {$newStatus}",
+                'payment_status' => $this->stock->isCompleted($newStatus) ? 'paid' : $sale->payment_status,
+                'notes' => trim(($sale->notes ? $sale->notes."\n" : '')."Status changed: {$oldStatus} -> {$newStatus}"),
             ]);
 
             DB::commit();
 
-            return $this->sendUpdated($sale, 'Sale status updated successfully');
-
+            return $this->sendUpdated($sale->fresh(['customer', 'items.product']), 'Sale status updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('Error updating sale status: ' . $e->getMessage());
+            return $this->sendError('Error updating sale status: '.$e->getMessage());
         }
     }
 }
-

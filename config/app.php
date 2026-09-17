@@ -55,6 +55,12 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Public website origin used to resolve catalog photo paths imported
+    | from FRACA-SERVCOM-WEBSITE (e.g. IMAGES/EXECUTIVE BEDS/...).
+    */
+    'website_asset_url' => env('WEBSITE_ASSET_URL', 'https://fracaservcom.co.ke'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
@@ -65,7 +71,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Africa/Nairobi'),
 
     /*
     |--------------------------------------------------------------------------

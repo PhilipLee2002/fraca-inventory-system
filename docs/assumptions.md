@@ -2,7 +2,7 @@
 
 **FRACA SERVCOM Inventory Management System**  
 **System Under Test (SUT): Laravel 12 Backend API + Database**  
-**Document Date: February 14, 2026**
+**Document Date:** September 2026
 
 ---
 
@@ -15,7 +15,7 @@ All assumptions documented below are based on analysis of migrations and models 
 | Table | Key Columns | Purpose |
 |-------|------------|---------|
 | **users** | id, name, email, password, role_id, email_verified_at, created_at, updated_at | User authentication & identification |
-| **roles** | id, name, description, created_at, updated_at | User roles (Admin, Staff) |
+| **roles** | id, name, description | Admin, Manager, Staff |
 | **permissions** | id, name, description, created_at, updated_at | Granular permissions (view-product, create-sale, etc.) |
 | **role_permission** | role_id, permission_id | Many-to-many junction table |
 | **products** | id, sku, barcode, product_name, description, cost_price, selling_price, current_stock, stock_threshold, unit, category_id, supplier_id, image_path, created_at, updated_at | Core inventory items |
@@ -51,39 +51,19 @@ All assumptions documented below are based on analysis of migrations and models 
 
 ## 2. API Endpoint Assumptions
 
-All endpoints are prefixed with `/api/v1` and require token-based authentication (`Authorization: Bearer {token}`) via Laravel Sanctum.
+All JSON endpoints are prefixed with `/api` (not `/api/v1`). The Blade app uses **session cookies** on the `web` middleware group. `POST /api/login` may also return a Sanctum token; UI calls do not send Bearer tokens. Every authenticated API route has a `permission:*` middleware.
 
 ### 2.1 Routes Defined
 
-| Method | Endpoint | Controller Method | Auth | Notes |
-|--------|----------|------------------|------|-------|
-| POST | `/api/v1/login` | AuthController@login | Public | Returns access token |
-| POST | `/api/v1/logout` | AuthController@logout | Required | Revokes token |
-| GET | `/api/v1/products` | ProductController@index | Required | List products with pagination |
-| POST | `/api/v1/products` | ProductController@store | Required | Create new product |
-| GET | `/api/v1/products/{id}` | ProductController@show | Required | Get product details |
-| PUT | `/api/v1/products/{id}` | ProductController@update | Required | Update product |
-| DELETE | `/api/v1/products/{id}` | ProductController@destroy | Required | Delete product |
-| GET | `/api/v1/suppliers` | SupplierController@index | Required | List suppliers |
-| POST | `/api/v1/suppliers` | SupplierController@store | Required | Create supplier |
-| GET | `/api/v1/customers` | CustomerController@index | Required | List customers |
-| POST | `/api/v1/customers` | CustomerController@store | Required | Create customer |
-| POST | `/api/v1/purchases` | PurchaseController@store | Required | Create purchase order |
-| GET | `/api/v1/purchases` | PurchaseController@index | Required | List purchases |
-| POST | `/api/v1/sales` | SaleController@store | Required | Create sale/invoice |
-| GET | `/api/v1/sales` | SaleController@index | Required | List sales |
-| POST | `/api/v1/stock-adjustments` | StockAdjustmentController@store | Required | Record manual stock adjustment |
-| GET | `/api/v1/reports/sales` | ReportController@sales | Required | Sales report |
-| GET | `/api/v1/reports/purchases` | ReportController@purchases | Required | Purchase report |
-| GET | `/api/v1/reports/stock-levels` | ReportController@stockLevels | Required | Inventory report |
-| GET | `/api/v1/reports/inventory-valuation` | ReportController@inventoryValuation | Required | Stock valuation |
+See [docs/system-architecture.md](system-architecture.md) §6.1. There is no `/api/v1` prefix. Extra launch fields: `sales.reference_number` (M-Pesa), `GET /sales/{id}/invoice` (PDF, web).
 
 ### 2.2 Authentication Assumptions
 
-- Laravel Sanctum (token-based) for API authentication
-- Login endpoint returns `access_token` and `token_type` (Bearer)
-- Tokens stored in HTTP-only cookies or Authorization header
-- Each user belongs to one role (Admin or Staff)
+- Session auth for the shop UI
+- Login JSON may include a token for optional API clients
+- Each user has one role: Admin, Manager, or Staff
+- Public registration is disabled
+- Inactive users cannot log in
 
 ---
 
@@ -91,10 +71,11 @@ All endpoints are prefixed with `/api/v1` and require token-based authentication
 
 ### 3.1 Stock Management
 
-- When a **Purchase** is created, `product.current_stock` is automatically incremented
-- When a **Sale** is created, `product.current_stock` is automatically decremented (if stock > sale quantity)
-- Each stock change is logged in `stock_histories` table
-- Manual **Stock Adjustment** records must be created for corrections
+- When a **Purchase** is received, `product.current_stock` is incremented
+- When a **Sale** is **completed**, `product.current_stock` is decremented. Pending sales do not touch stock
+- M-Pesa (`payment_method=transfer`) requires `reference_number`
+- Staff API payloads hide `cost_price`
+- Website `/api/contact` never creates an IMS sale
 
 ### 3.2 Alerts
 
@@ -109,9 +90,9 @@ All endpoints are prefixed with `/api/v1` and require token-based authentication
 
 ### 3.4 User Roles & Permissions
 
-- **Admin Role:** Full access (create/edit/delete all resources)
-- **Staff Role:** Limited access (create sales/purchases, view reports, cannot manage users)
-- Permissions enforced via middleware on protected routes
+- **Admin:** Full access (Benjamin)
+- **Manager:** Reports, stock, purchases; sees cost (Anne, Franklin)
+- **Staff:** Create customers/sales only; no cost, no reports (Receptionist)
 
 ---
 
@@ -140,9 +121,9 @@ All endpoints are prefixed with `/api/v1` and require token-based authentication
 
 | Username | Password | Role | Purpose |
 |----------|----------|------|---------|
-| admin@test.local | password | Admin | Full system access testing |
-| staff@test.local | password | Staff | Limited access testing |
-| (generated per test) | (random) | Various | Dynamic test data |
+| benjamin@fracaservcomltd.co.ke | FRACASERVCOM_STAFF_PASSWORD | Admin | Seeded MD |
+| anne@fracaservcomltd.co.ke | same | Manager | Seeded accountant |
+| factory users in tests | password | various | PHPUnit |
 
 ---
 
@@ -159,11 +140,9 @@ All endpoints are prefixed with `/api/v1` and require token-based authentication
 
 ### 5.2 Excluded
 
-- ❌ Frontend UI/UX testing (out of scope for backend-first)
-- ❌ Load/stress testing (Phase 7)
-- ❌ Barcode scanner hardware integration (Phase 5+)
-- ❌ Email notification delivery (Phase 6)
-- ❌ PDF/CSV export rendering (Phase 5+)
+- Frontend UI is in scope (manual + launch feature tests)
+- Barcode scanner, eTIMS, live website stock: out of launch
+- Email notification delivery: later
 
 ---
 
@@ -197,15 +176,14 @@ All endpoints are prefixed with `/api/v1` and require token-based authentication
 
 If during development any of the following differ from actual implementation, update this section:
 
-- [ ] Product table columns differ from listed schema
-- [ ] API endpoint paths differ from `/api/v1` prefix
-- [ ] Authentication method differs from Laravel Sanctum
-- [ ] Database relations differ from documented relationships
-- [ ] Role/Permission matrix differs from Admin/Staff assumption
+- [x] API paths are `/api/...` not `/api/v1`
+- [x] Shop UI uses session auth, not Bearer-only Sanctum
+- [x] Roles are Admin / Manager / Staff; Staff do not get view-report
+- [x] Catalog comes from the website extract (furniture + bags, no hardware)
 
 ---
 
 **Document Status:** Complete  
-**Last Updated:** February 14, 2026  
+**Last Updated:** September 2026  
 **Approved By:** Development Team  
 **Next Review:** Post-implementation (before UAT)

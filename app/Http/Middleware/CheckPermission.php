@@ -18,13 +18,25 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, $permission): Response
     {
-        // Check if user is authenticated
-        if (!$request->user()) {
+        if (! $request->user()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.',
+                ], 401);
+            }
+
             return redirect()->route('login');
         }
 
-        // Check if user has the required permission
-        if (!$request->user()->hasPermission($permission)) {
+        if (! $request->user()->hasPermission($permission)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action. You do not have permission to access this resource.',
+                ], 403);
+            }
+
             abort(403, 'Unauthorized action. You do not have permission to access this resource.');
         }
 

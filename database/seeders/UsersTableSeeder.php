@@ -2,63 +2,88 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UsersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get roles
         $adminRole = Role::where('name', 'admin')->first();
         $managerRole = Role::where('name', 'manager')->first();
         $staffRole = Role::where('name', 'staff')->first();
 
-        if (!$adminRole || !$managerRole || !$staffRole) {
+        if (! $adminRole || ! $managerRole || ! $staffRole) {
             echo "ERROR: Roles not found! Run RolesTableSeeder first.\n";
             return;
         }
 
-        // Users to create - ONLY with columns that exist
+        $password = Hash::make(env('FRACASERVCOM_STAFF_PASSWORD', 'Frac@Servcom2026'));
+
         $users = [
             [
-                'email' => 'admin@inventory.com',
-                'name' => 'Admin User',
+                'email' => 'benjamin@fracaservcomltd.co.ke',
+                'name' => 'Benjamin Shitsukane',
+                'phone' => '0725151495',
                 'role_id' => $adminRole->id,
             ],
             [
-                'email' => 'manager@inventory.com', 
-                'name' => 'Manager User',
+                'email' => 'anne@fracaservcomltd.co.ke',
+                'name' => 'Anne Jerubet',
+                'phone' => '0719273159',
                 'role_id' => $managerRole->id,
             ],
             [
-                'email' => 'staff@inventory.com',
-                'name' => 'Staff User', 
+                'email' => 'franklin@fracaservcomltd.co.ke',
+                'name' => 'Franklin Shitsukane',
+                'phone' => '0789296733',
+                'role_id' => $managerRole->id,
+            ],
+            [
+                'email' => 'reception@fracaservcomltd.co.ke',
+                'name' => 'Receptionist',
+                'phone' => null,
                 'role_id' => $staffRole->id,
             ],
         ];
 
         foreach ($users as $userData) {
             $user = User::where('email', $userData['email'])->first();
-            
-            if (!$user) {
-                // Create user with only EXISTING columns
+
+            if (! $user) {
                 User::create([
                     'name' => $userData['name'],
                     'email' => $userData['email'],
-                    'password' => Hash::make('password123'),
+                    'phone' => $userData['phone'],
+                    'password' => $password,
                     'role_id' => $userData['role_id'],
-                    // Don't include status, phone, address - they don't exist
+                    'status' => 'active',
+                    'email_verified_at' => now(),
                 ]);
                 echo "Created user: {$userData['email']}\n";
             } else {
-                echo "User already exists: {$userData['email']}\n";
+                $user->update([
+                    'name' => $userData['name'],
+                    'phone' => $userData['phone'],
+                    'role_id' => $userData['role_id'],
+                    'status' => 'active',
+                ]);
+                echo "Updated user: {$userData['email']}\n";
             }
         }
-        
+
+        $deactivated = User::whereIn('email', [
+            'admin@inventory.com',
+            'manager@inventory.com',
+            'staff@inventory.com',
+        ])->update(['status' => 'inactive']);
+
+        if ($deactivated) {
+            echo "Deactivated {$deactivated} demo account(s).\n";
+        }
+
         echo "Users seeded successfully!\n";
     }
 }

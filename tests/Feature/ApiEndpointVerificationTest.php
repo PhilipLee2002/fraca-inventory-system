@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Role;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ApiEndpointVerificationTest extends TestCase
@@ -19,12 +20,12 @@ class ApiEndpointVerificationTest extends TestCase
     {
         parent::setUp();
 
-        // Create roles
         $adminRole = Role::create(['name' => 'admin', 'description' => 'Administrator']);
         $managerRole = Role::create(['name' => 'manager', 'description' => 'Manager']);
         $staffRole = Role::create(['name' => 'staff', 'description' => 'Staff']);
 
-        // Create users
+        $this->seed(PermissionSeeder::class);
+
         $this->adminUser = User::factory()->create([
             'email' => 'admin@inventory.com',
             'role_id' => $adminRole->id,
@@ -70,7 +71,7 @@ class ApiEndpointVerificationTest extends TestCase
     /** @test */
     public function test_products_endpoint_works_with_authentication()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
+        $response = $this->actingAs($this->adminUser)
             ->getJson('/api/products');
 
         $response->assertStatus(200)
@@ -82,102 +83,125 @@ class ApiEndpointVerificationTest extends TestCase
     }
 
     /** @test */
+    public function test_staff_cannot_create_products_via_api()
+    {
+        $this->actingAs($this->staffUser)
+            ->postJson('/api/products', [
+                'name' => 'Blocked Chair',
+                'sku' => 'BLK-001',
+                'category_id' => 1,
+                'cost_price' => 100,
+                'selling_price' => 200,
+                'current_stock' => 1,
+                'reorder_level' => 0,
+            ])
+            ->assertStatus(403);
+    }
+
+    /** @test */
     public function test_suppliers_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/suppliers');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/suppliers')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_customers_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/customers');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/customers')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_purchases_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/purchases');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/purchases')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_sales_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/sales');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/sales')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_stock_adjustments_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/stock-adjustments');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/stock-adjustments')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_dashboard_report_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/reports/dashboard');
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/reports/dashboard')
+            ->assertStatus(200)
+            ->assertJsonPath('data.stats.week_sales', 0)
+            ->assertJsonStructure([
+                'data' => [
+                    'stats' => [
+                        'today_sales',
+                        'week_sales',
+                        'today_by_payment' => ['cash', 'mpesa', 'bank', 'card'],
+                    ],
+                ],
+            ]);
+    }
 
-        $response->assertStatus(200);
+    /** @test */
+    public function test_staff_cannot_open_accountant_reports()
+    {
+        $this->actingAs($this->staffUser)
+            ->getJson('/api/reports/sales')
+            ->assertStatus(403);
     }
 
     /** @test */
     public function test_sales_report_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/reports/sales');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/reports/sales')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_purchases_report_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/reports/purchases');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/reports/purchases')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_stock_levels_report_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/reports/stock-levels');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/reports/stock-levels')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_inventory_valuation_report_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->getJson('/api/reports/inventory-valuation');
-
-        $response->assertStatus(200);
+        $this->actingAs($this->adminUser)
+            ->getJson('/api/reports/inventory-valuation')
+            ->assertStatus(200);
     }
 
     /** @test */
     public function test_logout_endpoint_works()
     {
-        $response = $this->actingAs($this->adminUser, 'sanctum')
-            ->postJson('/api/logout');
-
-        $response->assertStatus(200)
+        $this->actingAs($this->adminUser)
+            ->postJson('/api/logout')
+            ->assertStatus(200)
             ->assertJson([
                 'success' => true,
                 'message' => 'Logged out successfully'
@@ -188,11 +212,8 @@ class ApiEndpointVerificationTest extends TestCase
     public function test_csrf_token_is_available_in_web_routes()
     {
         $response = $this->get('/');
-        
-        // Should redirect to login if not authenticated
+
         $response->assertStatus(302);
-        
-        // Check that CSRF token cookie is set
         $this->assertNotNull($response->headers->getCookies());
     }
 }

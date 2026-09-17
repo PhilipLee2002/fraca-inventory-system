@@ -50,9 +50,11 @@ class ReportController extends BaseController
             $baseQuery = Sale::when($request->filled('start_date'), fn($q) => $q->where('sale_date', '>=', $request->start_date))
                              ->when($request->filled('end_date'),   fn($q) => $q->where('sale_date', '<=', $request->end_date));
 
-            $confirmedRevenue = (clone $baseQuery)->where('status', 'completed')->sum('total_amount');
+            $confirmedQuery = (clone $baseQuery)->where('status', 'completed');
+            $confirmedRevenue = (clone $confirmedQuery)->sum('total_amount');
             $pendingRevenue   = (clone $baseQuery)->where('status', 'pending')->sum('total_amount');
             $totalTransactions = $sales->total();
+            $byPayment = $this->paymentBreakdown($confirmedQuery);
 
             return $this->sendSuccess([
                 'sales' => $sales,
@@ -61,6 +63,7 @@ class ReportController extends BaseController
                     'pending_revenue'        => round($pendingRevenue, 2),
                     'total_transactions'     => $totalTransactions,
                     'average_sale_value'     => $totalTransactions > 0 ? round($confirmedRevenue / max($totalTransactions, 1), 2) : 0,
+                    'by_payment_method'      => $byPayment,
                 ]
             ], 'Sales report retrieved successfully');
 
@@ -146,6 +149,7 @@ class ReportController extends BaseController
             }
 
             $products = $query->orderBy('name')->paginate($request->input('per_page', 50));
+            $this->hideCostFromStaff($products);
 
             // Calculate summary
             $totalProducts = Product::count();
@@ -185,6 +189,7 @@ class ReportController extends BaseController
             }
 
             $products = $query->where('current_stock', '>', 0)->get();
+            $this->hideCostFromStaff($products);
 
             $totalValuation = 0;
             $totalPotentialRevenue = 0;
@@ -304,12 +309,16 @@ class ReportController extends BaseController
     {
         try {
             $today = Carbon::today();
+            $weekStart = Carbon::now()->startOfWeek();
             $monthStart = Carbon::now()->startOfMonth();
 
-            // Today's sales
-            $todaySales = Sale::whereDate('sale_date', $today)
-                ->where('status', 'completed')
-                ->sum('total_amount');
+            $completedToday = Sale::whereDate('sale_date', $today)->where('status', 'completed');
+            $completedWeek = Sale::whereDate('sale_date', '>=', $weekStart)->where('status', 'completed');
+
+            $todaySales = (clone $completedToday)->sum('total_amount');
+            $weekSales = (clone $completedWeek)->sum('total_amount');
+            $todayByPayment = $this->paymentBreakdown($completedToday);
+            $weekByPayment = $this->paymentBreakdown($completedWeek);
 
             // Monthly sales
             $monthlySales = Sale::where('sale_date', '>=', $monthStart)
@@ -371,31 +380,45 @@ class ReportController extends BaseController
                 ->where('created_at', '>=', Carbon::now()->subDays(7))
                 ->count();
 
+            $stats = [
+                'today_sales' => round($todaySales, 2),
+                'week_sales' => round($weekSales, 2),
+                'today_by_payment' => $todayByPayment,
+                'week_by_payment' => $weekByPayment,
+                'monthly_sales' => round($monthlySales, 2),
+                'monthly_purchases' => round($monthlyPurchases, 2),
+                'profit_margin' => $profitMargin,
+                'sales_vs_target' => 0,
+                'low_stock_items' => $lowStockCount,
+                'out_of_stock_items' => $outOfStockCount,
+                'overstock' => 0,
+                'stock_turnover' => 0,
+                'inventory_valuation' => round($inventoryValuation, 2),
+                'total_products' => Product::count(),
+                'total_customers' => Customer::count(),
+                'total_suppliers' => Supplier::count(),
+                'total_users' => \App\Models\User::count(),
+                'active_alerts' => $activeAlertsCount,
+                'pending_sales' => $pendingSales,
+                'pending_purchases' => $pendingPurchases,
+                'recent_adjustments' => $recentAdjustments,
+                'monthly_revenue' => round($monthlyRevenue, 2),
+                'monthly_expenses' => round($monthlyExpenses, 2),
+                'monthly_profit' => round($monthlyProfit, 2),
+            ];
+
+            if (! auth()->user()?->canSeeCost()) {
+                unset(
+                    $stats['monthly_purchases'],
+                    $stats['profit_margin'],
+                    $stats['inventory_valuation'],
+                    $stats['monthly_expenses'],
+                    $stats['monthly_profit']
+                );
+            }
+
             return $this->sendSuccess([
-                'stats' => [
-                    'today_sales'          => round($todaySales, 2),
-                    'monthly_sales'        => round($monthlySales, 2),
-                    'monthly_purchases'    => round($monthlyPurchases, 2),
-                    'profit_margin'        => $profitMargin,
-                    'sales_vs_target'      => 0, // placeholder — no target model yet
-                    'low_stock_items'      => $lowStockCount,
-                    'out_of_stock_items'   => $outOfStockCount,
-                    'overstock'            => 0, // placeholder
-                    'stock_turnover'       => 0, // placeholder
-                    'inventory_valuation'  => round($inventoryValuation, 2),
-                    'total_products'       => Product::count(),
-                    'total_customers'      => Customer::count(),
-                    'total_suppliers'      => Supplier::count(),
-                    'total_users'          => \App\Models\User::count(),
-                    'active_alerts'        => $activeAlertsCount,
-                    'pending_sales'        => $pendingSales,
-                    'pending_purchases'    => $pendingPurchases,
-                    'recent_adjustments'   => $recentAdjustments,
-                    // Financial summary
-                    'monthly_revenue'      => round($monthlyRevenue, 2),
-                    'monthly_expenses'     => round($monthlyExpenses, 2),
-                    'monthly_profit'       => round($monthlyProfit, 2),
-                ],
+                'stats' => $stats,
                 'top_performers' => $topPerformers,
             ], 'Dashboard statistics retrieved successfully');
 
@@ -544,5 +567,41 @@ class ReportController extends BaseController
         } catch (\Exception $e) {
             return $this->sendError('Error updating alert: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Completed-sale totals grouped for the accountant's cash-up.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return array{cash: float, mpesa: float, bank: float, card: float, other: float}
+     */
+    private function paymentBreakdown($query): array
+    {
+        $rows = (clone $query)
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
+            ->groupBy('payment_method')
+            ->get();
+
+        $out = [
+            'cash' => 0.0,
+            'mpesa' => 0.0,
+            'bank' => 0.0,
+            'card' => 0.0,
+            'other' => 0.0,
+        ];
+
+        $map = [
+            'cash' => 'cash',
+            'card' => 'card',
+            'transfer' => 'mpesa',
+            'bank' => 'bank',
+        ];
+
+        foreach ($rows as $row) {
+            $key = $map[$row->payment_method] ?? 'other';
+            $out[$key] += (float) $row->total;
+        }
+
+        return array_map(fn ($value) => round($value, 2), $out);
     }
 }

@@ -108,9 +108,16 @@
                             <label class="form-label">Payment Method</label>
                             <select class="form-select" name="payment_method" id="sale-payment-method">
                                 <option value="cash">Cash</option>
+                                <option value="transfer">M-Pesa</option>
+                                <option value="bank">Bank transfer</option>
                                 <option value="card">Card</option>
-                                <option value="transfer">Mpesa</option>
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">M-Pesa / Till ref</label>
+                            <input type="text" class="form-control" name="reference_number" id="sale-reference"
+                                   placeholder="Required for M-Pesa" maxlength="100">
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Status</label>

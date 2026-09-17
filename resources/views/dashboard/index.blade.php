@@ -80,14 +80,41 @@
             <div class="card shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon bg-info-subtle text-info rounded-circle me-3">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-calendar-week"></i>
                     </div>
                     <div>
-                        <div class="text-muted small">Total Users</div>
-                        <div class="fs-4 fw-semibold placeholder-glow" data-stat="total-users">
+                        <div class="text-muted small">This Week's Sales</div>
+                        <div class="fs-4 fw-semibold placeholder-glow" data-stat="week-sales">
                             <span class="placeholder col-6 rounded"></span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Accountant morning totals by payment method --}}
+    <h5 class="mb-3">Today &amp; this week by payment</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white">Today</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2"><span>Cash</span><strong data-stat="today-cash">—</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>M-Pesa</span><strong data-stat="today-mpesa">—</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Bank</span><strong data-stat="today-bank">—</strong></div>
+                    <div class="d-flex justify-content-between"><span>Card</span><strong data-stat="today-card">—</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white">This week</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2"><span>Cash</span><strong data-stat="week-cash">—</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>M-Pesa</span><strong data-stat="week-mpesa">—</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Bank</span><strong data-stat="week-bank">—</strong></div>
+                    <div class="d-flex justify-content-between"><span>Card</span><strong data-stat="week-card">—</strong></div>
                 </div>
             </div>
         </div>

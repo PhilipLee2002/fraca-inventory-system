@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "open": "node -e \"import('node:child_process').then(({exec})=>exec(process.platform==='win32'?'cmd /c start \\\"\\\" http://127.0.0.1:8000/login':'open http://127.0.0.1:8000/login'))\""
     },
     "devDependencies": {
         "autoprefixer": "^10.4.2",

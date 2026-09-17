@@ -1,23 +1,24 @@
 # User Manual
 ## FRACA SERVCOM Inventory Management System
 
-**Document Version:** 1.0
-**Date:** March 2026
-**Audience:** All system users (Admin, Manager, Staff)
+**Document Version:** 1.1
+**Date:** September 2026
+**Audience:** Benjamin (Admin), Anne (Accountant), Franklin (Store), Receptionist
 
 ---
 
 ## 1. Introduction
 
-The FRACA SERVCOM Inventory Management System is a web-based application for managing your business inventory, sales, purchases, suppliers, customers, and financial reports. It runs in any modern web browser and requires no software installation.
+The FRACA SERVCOM Inventory Management System is the shop book for furniture and bags at Musco Towers, Eldoret. The public website is only a catalog; reception types a sale here after a client is serious.
 
 ### 1.1 User Roles
 
-| Role | What They Can Do |
+| Person / role | What they can do |
 |------|-----------------|
-| Admin | Full access — manage users, all CRUD operations, hard deletes |
-| Manager | All operations except hard deletes (requires admin verification) |
-| Staff | View products/categories/suppliers/customers; create sales and purchases |
+| Benjamin — Admin | Prices, users, deletes, everything |
+| Anne — Manager (accountant) | Sales/purchases, reports, daily totals, **can see cost** |
+| Franklin — Manager (store) | Purchases in, stock adjustments, low stock, **can see cost** |
+| Receptionist — Staff | Customers and sales after a serious lead; **cannot** see cost, change prices, or open reports |
 
 ### 1.2 Accessing the System
 
@@ -35,13 +36,18 @@ Open your browser and navigate to the system URL (e.g., `http://localhost:8000` 
 
 > **[SCREENSHOT: Login page — show the login form with email/password fields and the Log In button]**
 
-**Default credentials (development/demo):**
+**Seeded accounts** (change the password after first login; override with `FRACASERVCOM_STAFF_PASSWORD` in `.env`):
 
-| Email | Password | Role |
+| Email | Person | Role |
 |-------|----------|------|
-| admin@inventory.com | password123 | Admin |
-| manager@inventory.com | password123 | Manager |
-| staff@inventory.com | password123 | Staff |
+| benjamin@fracaservcomltd.co.ke | Benjamin Shitsukane | Admin |
+| anne@fracaservcomltd.co.ke | Anne Jerubet | Manager |
+| franklin@fracaservcomltd.co.ke | Franklin Shitsukane | Manager |
+| reception@fracaservcomltd.co.ke | Receptionist | Staff |
+
+Default password: `Frac@Servcom2026`. There is no public **Register** page. Ask Benjamin or the receptionist if a password needs resetting.
+
+Old demo emails (`admin@inventory.com` and similar) are turned off.
 
 **Logging Out:**
 Click your name in the top-right navigation bar, then click **Logout**.
@@ -55,14 +61,14 @@ The top navigation bar is always visible. The links shown depend on your role.
 | Nav Item | Roles With Access |
 |----------|------------------|
 | Dashboard | All |
-| Products | All |
+| Products | All (Staff see selling price only, not cost) |
 | Categories | Admin, Manager |
 | Suppliers | Admin, Manager |
-| Customers | Admin, Manager |
+| Customers | All (Reception creates named customers for churches/companies) |
 | Sales | All |
-| Purchases | All |
+| Purchases | Admin, Manager (Franklin); Staff may view, not create |
 | Stock Adjustments | Admin, Manager |
-| Reports | All |
+| Reports | Admin, Manager (Anne’s morning totals) |
 | Users | Admin only |
 
 > **[SCREENSHOT: Navigation bar — show the full navbar with all menu items visible (use Admin account)]**
@@ -79,10 +85,12 @@ The dashboard gives you a real-time overview of the business. It refreshes autom
 
 The top row shows key metrics:
 
-- **Total Products** — number of products in the system
-- **Today's Sales** — total sales revenue for today (KSh)
-- **Low Stock Items** — products at or below their reorder level
-- **Total Users** — registered system users
+- **Total Products** — items in the catalog
+- **Today's Sales** — completed sales today (KSh) — Anne’s morning number
+- **This Week's Sales** — completed sales this week (KSh)
+- **Low Stock Items** — products at or below reorder level
+
+Below that, **Today & this week by payment** splits cash, M-Pesa, bank, and card.
 
 > **[SCREENSHOT: Dashboard top stats cards — show the 4 metric cards with values]**
 
@@ -251,6 +259,8 @@ Click the invoice number (blue link) in the table to open a read-only detail vie
 1. Click **New Sale**
 2. Select a **Customer** (or leave as Walk-in)
 3. Set the **Sale Date**, **Payment Method**, and **Status**
+   - Cash, M-Pesa, Bank transfer, or Card
+   - For **M-Pesa**, fill **M-Pesa / Till ref** (required so Anne can reconcile)
 4. Add line items:
    - Select a **Product** from the dropdown (price auto-fills)
    - Set the **Quantity**
@@ -259,7 +269,10 @@ Click the invoice number (blue link) in the table to open a read-only detail vie
    - Click the red × button to remove a row
 5. The **Total** updates automatically as you add items
 6. Add **Notes** if needed
-7. Click **Save**
+7. Set status to **Completed** when money is taken (or the client is confirmed). **Pending** does **not** reduce stock.
+8. Click **Save**
+
+To print for a church or office: open the sale and click **Print A4 invoice**. That PDF is not a KRA eTIMS tax invoice.
 
 > **[SCREENSHOT: New Sale modal — show the form with 2–3 line items and the running total]**
 
@@ -409,11 +422,13 @@ Click your name in the navigation bar and select **Profile** to:
 
 ### 15.2 Processing a Sale
 
-1. Go to **Sales** → **New Sale**
+1. Go to **Sales** → **New Sale** after the client is serious (not from the website form automatically)
 2. Select the customer (or leave as Walk-in)
 3. Add products and quantities
-4. Set status to **Completed** and payment method
-5. Save — stock levels decrease automatically
+4. Set payment method; for M-Pesa enter the Till reference
+5. Set status to **Completed** when it should leave the shelf
+6. Save — stock decreases only if the sale is completed
+7. Print the A4 invoice if they need a document
 
 ### 15.3 Investigating Low Stock
 
@@ -454,4 +469,6 @@ These disappear automatically after a few seconds.
 | "You do not have permission" message | Contact your Admin to update your role permissions |
 | Cannot delete a category | Remove or reassign all products in that category first |
 | Sale total shows 0 | Select a product from the dropdown before entering quantity |
-| Login fails | Check caps lock; contact Admin to reset your password |
+| Login fails | Check caps lock; ask the receptionist or Benjamin to reset your password |
+| No Register page | Registration is off. Only seeded/admin-created users can sign in |
+| Cost price missing | Reception cannot see cost; Anne and Franklin can |

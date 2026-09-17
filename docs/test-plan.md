@@ -1,10 +1,10 @@
 # Test Plan
 ## FRACA SERVCOM Inventory Management System
 
-**Document Version:** 1.0  
-**Date:** March 2026  
+**Document Version:** 1.1  
+**Date:** September 2026  
 **System:** FRACA SERVCOM Inventory Management System  
-**Technology Stack:** Laravel 11, PHP 8.2, MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
+**Technology Stack:** Laravel 12, PHP 8.2, SQLite or MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
 
 ---
 
@@ -35,7 +35,7 @@ Testing covers:
 
 | Component | Details |
 |-----------|---------|
-| Backend | Laravel 11, PHP 8.2 |
+| Backend | Laravel 12, PHP 8.2 |
 | Database (Testing) | SQLite in-memory (`:memory:`) |
 | Database (Production) | MySQL — `fraca_inventory` |
 | Frontend | Bootstrap 5, Vanilla JS, Vite |
@@ -60,9 +60,12 @@ Run `php artisan migrate --seed` or `php artisan db:seed` to create these accoun
 
 | Email | Password | Role | Access Level |
 |-------|----------|------|--------------|
-| admin@inventory.com | password123 | Admin | Full access — all CRUD, user management, hard deletes |
-| manager@inventory.com | password123 | Manager | Full access except hard deletes; deletes require admin verification |
-| staff@inventory.com | password123 | Staff | View only + create sales and purchases |
+| benjamin@fracaservcomltd.co.ke | `FRACASERVCOM_STAFF_PASSWORD` | Admin | MD — prices, users, deletes |
+| anne@fracaservcomltd.co.ke | same | Manager | Accountant — reports, sees cost |
+| franklin@fracaservcomltd.co.ke | same | Manager | Store — purchases, stock |
+| reception@fracaservcomltd.co.ke | same | Staff | Sales/customers; no cost or reports |
+
+PHPUnit creates its own factory users (`password`). Launch behaviour is covered by `tests/Feature/FracaLaunchSliceTest.php`.
 
 ---
 
@@ -146,7 +149,7 @@ These tests are performed manually in the browser.
 
 | Test ID | Scenario | Steps | Expected Result |
 |---------|----------|-------|-----------------|
-| AT-001 | Admin login | Navigate to /login, enter admin@inventory.com / password123 | Redirected to dashboard |
+| AT-001 | Admin login | Navigate to /login, enter benjamin@fracaservcomltd.co.ke and the seeded password | Redirected to dashboard |
 | AT-002 | Invalid login | Enter wrong password | Error message displayed |
 | AT-003 | Logout | Click username → Logout | Redirected to login page |
 | AT-004 | Unauthenticated access | Navigate to /products without login | Redirected to /login |
@@ -156,7 +159,7 @@ These tests are performed manually in the browser.
 | Test ID | Scenario | Role | Expected Result |
 |---------|----------|------|-----------------|
 | AT-005 | Admin sees all nav items | Admin | Dashboard, Products, Sales, Purchases, Stock, Categories, Customers, Suppliers, Reports, Users |
-| AT-006 | Staff sees limited nav | Staff | Dashboard, Products, Sales, Purchases only |
+| AT-006 | Staff sees limited nav | Staff | Dashboard, Products, Customers, Sales (no Reports, no Users) |
 | AT-007 | Admin sees delete buttons | Admin | Trash icon visible in all tables |
 | AT-008 | Manager delete triggers verification | Manager | Admin Verification Modal opens on delete |
 | AT-009 | Staff sees no action buttons | Staff | No edit/delete buttons in tables |
@@ -176,8 +179,10 @@ These tests are performed manually in the browser.
 
 | Test ID | Scenario | Steps | Expected Result |
 |---------|----------|-------|-----------------|
-| AT-016 | Create new sale | New Sale → add items → Save | Sale appears in table with KSh total |
-| AT-017 | View sale details | Click invoice number | Modal shows line items and total |
+| AT-016 | Create completed sale | New Sale → add items → Completed → Save | Sale appears; stock drops |
+| AT-016b | Pending sale | Save as Pending | Sale appears; stock unchanged |
+| AT-016c | M-Pesa without ref | Payment M-Pesa, empty Till ref | Validation error |
+| AT-017 | View sale + invoice | Click invoice number → Print A4 invoice | Modal + PDF |
 | AT-018 | Create new purchase | New Purchase → add items → Save | Purchase appears in table |
 | AT-019 | Dynamic total calculation | Add/change items in sale form | Total updates in real time |
 

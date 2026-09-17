@@ -10,7 +10,7 @@ class CategoryController extends BaseController
     public function index(Request $request)
     {
         try {
-            $query = Category::withCount('products')->orderBy('name');
+            $query = Category::withCount('products')->orderBy('group')->orderBy('name');
 
             if ($request->filled('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
@@ -35,6 +35,8 @@ class CategoryController extends BaseController
         try {
             $data = $request->validate([
                 'name'        => 'required|string|max:255|unique:categories,name',
+                'slug'        => 'nullable|string|max:100|unique:categories,slug',
+                'group'       => 'nullable|string|max:100',
                 'description' => 'nullable|string',
             ]);
             $category = Category::create($data);
@@ -56,6 +58,8 @@ class CategoryController extends BaseController
         try {
             $data = $request->validate([
                 'name'        => 'required|string|max:255|unique:categories,name,' . $category->id,
+                'slug'        => 'nullable|string|max:100|unique:categories,slug,' . $category->id,
+                'group'       => 'nullable|string|max:100',
                 'description' => 'nullable|string',
             ]);
             $category->update($data);

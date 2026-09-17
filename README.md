@@ -1,162 +1,78 @@
 # FRACA SERVCOM Inventory Management System
 
-> Web-based inventory system for FRACA SERVCOM (furniture & hardware supplies)
+Shop inventory for **Fraca Servcom Ltd** (Musco Towers, Eldoret): **furniture and bags**. Hardware is not sold and is not imported.
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+The public website ([fracaservcom.co.ke](https://fracaservcom.co.ke), local copy in `FRACA-SERVCOM-WEBSITE/`) is a catalog and contact form only. It does **not** create sales. Reception records a sale in this app after a client is serious.
 
-## 🚀 Quick Start
+```
+Public website  →  photos / names / prices snapshot  →  inventory catalog
+WhatsApp / form  →  Reception  →  type the sale here
+```
+
+## Quick start
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/PhilipLee2002/fraca-inventory-system.git
-cd fraca-inventory-system
-
-# 2. Install dependencies
 composer install
-
-# 3. Setup environment
+npm install
 cp .env.example .env
 php artisan key:generate
-
-# 4. Configure database in .env:
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=fraca_inventory
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-# 5. Run migrations
-php artisan migrate
-
-# 6. Start development server
+php artisan migrate --seed
 php artisan serve
-Access at: http://localhost:8000
+npm run dev
+```
 
-📋 Project Features
-Product Management – CRUD operations, barcode support, categories
+Then open **http://127.0.0.1:8000/login** (or run `npm run open` / double-click `open-inventory.cmd`). Ignore Vite’s `localhost:5173` — that is only CSS/JS, not the app.
 
-Stock Control – Real-time tracking, low-stock alerts, audit logs
+Default database in `.env.example` is **SQLite**. Switch to MySQL in `.env` if you prefer.
 
-Sales & Purchases – Invoice generation, line items, stock auto-update
+Refresh the catalog after website gallery changes:
 
-Reporting – Sales/Purchase/Stock reports, CSV/PDF exports
+```bash
+node database/scripts/extract-website-catalog.mjs
+php artisan db:seed --class=CategoriesTableSeeder
+php artisan db:seed --class=ProductsTableSeeder
+```
 
-User Management – Role-based access (Admin/Staff), authentication
+Opening stock stays **0** until Franklin/Anne count it. Cost stays **0** until they enter it.
 
-Alerts – Dashboard notifications, email alerts for low stock
+## Who logs in
 
-🛠️ Tech Stack
-Component	Technology
-Backend	PHP Laravel 10+
-Database	MySQL
-Frontend	HTML, CSS, JavaScript
-Templates	Laravel Blade
-CSS Framework	(Optional: Tailwind CSS)
-Development	XAMPP / Laravel Valet
-📁 Project Structure
-text
-app/
-├── Models/              # Eloquent models (Product, Sale, Purchase, etc.)
-├── Http/
-│   ├── Controllers/    # Application controllers
-│   └── Middleware/     # Authentication & role middleware
-database/
-├── migrations/         # Database schema definitions
-├── seeders/           # Test data population
-resources/
-├── views/             # Blade templates (.blade.php)
-├── css/               # Stylesheets
-└── js/                # JavaScript files
-public/                # Web server root
-🔧 Development Commands
-bash
-# Database
-php artisan migrate                 # Run all migrations
-php artisan migrate:refresh         # Reset and re-run migrations
-php artisan db:seed                 # Populate with test data
-php artisan make:model Product -m   # Create model with migration
+Public registration is **disabled**. Seeded accounts (password from `FRACASERVCOM_STAFF_PASSWORD`, default `Frac@Servcom2026` — change after first login):
 
-# Code Generation
-php artisan make:controller ProductController --resource
-php artisan make:request StoreProductRequest
-php artisan make:seeder ProductSeeder
+| Person | Email | Role |
+|--------|--------|------|
+| Benjamin Shitsukane (MD) | benjamin@fracaservcomltd.co.ke | Admin |
+| Anne Jerubet (Accountant) | anne@fracaservcomltd.co.ke | Manager |
+| Franklin Shitsukane (Store) | franklin@fracaservcomltd.co.ke | Manager |
+| Receptionist | reception@fracaservcomltd.co.ke | Staff |
 
-# Development
-php artisan serve                   # Start local server
-php artisan tinker                  # Interactive PHP shell
-php artisan route:list              # Show all routes
+Old demo emails (`admin@inventory.com`, …) are deactivated on seed.
 
-# Code Quality
-vendor/bin/php-cs-fixer fix         # Format PHP code
-📦 Installed Packages
-Package	Purpose
-laravel/breeze	Authentication scaffolding
-barryvdh/laravel-dompdf	PDF report generation
-league/csv	CSV import/export functionality
-friendsofphp/php-cs-fixer	PHP code formatting standards
-📄 Project Documentation
-development_reference.md – Complete project specifications, feature list, and phased development plan
+Reception can create customers and sales, not prices, cost, or reports. Anne sees daily/weekly totals by cash / M-Pesa / bank. Staff never see `cost_price`.
 
-PROJECT_BOARD.md – Task tracking and progress monitoring
+## What launch includes
 
-.env.example – Environment configuration template
+- Products and categories from the live furniture + bags catalog
+- Walk-in or named customer (churches/companies)
+- Cash, M-Pesa (Till reference required), bank, card
+- Stock drops only when a sale is **completed**
+- Printable A4 invoice PDF (not KRA eTIMS)
+- Dashboard: today and this week by payment method
 
-🔄 Development Phases
+**Not in this phase:** quotes, deposits, VAT/eTIMS, workshop materials, barcode scanner, live website stock, cart checkout.
 
-| Phase | Status |
-|-------|--------|
-| Phase 0 – Project Setup | ✅ Complete |
-| Phase 1 – Database & Core Models | ✅ Complete |
-| Phase 2 – Authentication & Authorization | ✅ Complete |
-| Phase 3 – Core Business Logic | ✅ Complete |
-| Phase 4 – API & Testing | ✅ Complete |
-| Phase 5 – Frontend Implementation | ✅ Complete |
-| Phase 6 – Notifications & Background Jobs | ⏳ Planned |
-| Phase 7 – Testing & QA | ⏳ Planned |
-| Phase 8 – Deployment & Handover | ⏳ Planned |
+## Docs
 
-About Laravel
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| File | Purpose |
+|------|---------|
+| [docs/user-manual.md](docs/user-manual.md) | How staff use the shop system |
+| [docs/system-architecture.md](docs/system-architecture.md) | How the app is built |
+| [docs/implementation-strategy.md](docs/implementation-strategy.md) | Stack, RBAC, deploy |
+| [FRACA-SERVCOM-WEBSITE/README.md](FRACA-SERVCOM-WEBSITE/README.md) | Public site (catalog + contact) |
+| [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md) | What shipped, later work, **before-production checklist** |
 
-Simple, fast routing engine.
+## Tech
 
-Powerful dependency injection container.
+Laravel 12, PHP 8.2, session auth (Breeze), Blade + Bootstrap 5 + Axios, Vite, SQLite or MySQL. Timezone: `Africa/Nairobi`.
 
-Multiple back-ends for session and cache storage.
-
-Expressive, intuitive database ORM.
-
-Database agnostic schema migrations.
-
-Robust background job processing.
-
-Real-time event broadcasting.
-
-Learning Laravel
-Laravel has the most extensive and thorough documentation and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-🔒 Security Notes
-Passwords are hashed using bcrypt
-
-CSRF protection enabled on all forms
-
-SQL injection prevention via Eloquent ORM
-
-XSS protection via Blade templating
-
-Role-based access control on all protected routes
-
-📞 Support & Contact
-Developer: Philip Lee (Phillee2003@gmail.com)
-
-Client: FRACA SERVCOM
-
-Repository: https://github.com/PhilipLee2002/fraca-inventory-system
-
-License
-The Laravel framework is open-sourced software licensed under the MIT license.
-
-*FRACA Inventory System | Last Updated: 2026-03-15*
-
-For complete project specifications and development plan, see [development_reference.md](development_reference.md).
+Developer: Philip Lee. Client: Fraca Servcom Ltd.

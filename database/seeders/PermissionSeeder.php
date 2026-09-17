@@ -82,14 +82,15 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        // Staff — read + create sales/purchases + stock view
+        // Staff (Reception) — record serious leads as sales; cannot see cost, prices, or reports
         if ($staff) {
             $staff->rolePermissions()->sync(
                 Permission::whereIn('name', [
-                    'view-product', 'view-category', 'view-supplier', 'view-customer',
+                    'view-product', 'view-category', 'view-supplier',
+                    'view-customer', 'create-customer', 'edit-customer',
                     'view-sale', 'create-sale',
-                    'view-purchase', 'create-purchase',
-                    'view-stock', 'view-report',
+                    'view-purchase',
+                    'view-stock',
                 ])->pluck('id')
             );
         }

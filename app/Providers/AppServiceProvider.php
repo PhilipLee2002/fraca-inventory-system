@@ -13,6 +13,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register all permissions with Laravel's Gate so @can() works in Blade
+        Gate::define('see-cost', function ($user) {
+            return $user->canSeeCost();
+        });
+
         try {
             Permission::all()->each(function ($permission) {
                 Gate::define($permission->name, function ($user) use ($permission) {

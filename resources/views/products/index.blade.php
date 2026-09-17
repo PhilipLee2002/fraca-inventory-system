@@ -55,6 +55,7 @@
                 <table class="table table-hover align-middle mb-0" id="products-table">
                     <thead class="table-dark">
                         <tr>
+                            <th style="width:56px"></th>
                             <th>SKU</th>
                             <th>Name</th>
                             <th>Category</th>
@@ -65,7 +66,7 @@
                     </thead>
                     <tbody id="products-tbody">
                         <tr>
-                            <td colspan="6" class="text-center py-4">
+                            <td colspan="7" class="text-center py-4">
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 Loading products...
                             </td>
@@ -114,6 +115,17 @@
                             <textarea class="form-control" name="description" id="product-description" rows="2"></textarea>
                             <div class="invalid-feedback"></div>
                         </div>
+                        <div class="col-md-9">
+                            <label class="form-label">Catalog photo path</label>
+                            <input type="text" class="form-control" name="image" id="product-image"
+                                   placeholder="IMAGES/BEDS/example.jpg">
+                            <div class="form-text">Relative path on fracaservcom.co.ke, or a full image URL.</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <img id="product-image-preview" alt="" width="72" height="72"
+                                 class="rounded border d-none" style="width:72px;height:72px;object-fit:cover">
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Category <span class="text-danger">*</span></label>
                             <select class="form-select" name="category_id" id="product-category" required>
@@ -134,7 +146,7 @@
                             </select>
                             <div class="invalid-feedback"></div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3" id="product-cost-wrap" @cannot('see-cost') hidden @endcannot>
                             <label class="form-label">Cost Price <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">KSh</span>

@@ -1,16 +1,16 @@
 # Implementation Strategy Document
 ## FRACA SERVCOM Inventory Management System
 
-**Document Version:** 1.0
-**Date:** March 2026
+**Document Version:** 1.1
+**Date:** September 2026
 **Author:** Development Team
-**Technology Stack:** Laravel 11, PHP 8.2, MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
+**Technology Stack:** Laravel 12, PHP 8.2, SQLite or MySQL, Bootstrap 5, Vanilla JavaScript (ES6+), Vite
 
 ---
 
 ## 1. Project Overview
 
-The FRACA SERVCOM Inventory Management System is a web-based application designed to manage products, stock levels, sales, purchases, suppliers, customers, and reporting for a small-to-medium business. The system enforces role-based access control (RBAC) across three user tiers: Admin, Manager, and Staff.
+The FRACA SERVCOM Inventory Management System is the shop book for furniture and bags (not hardware). Role-based access: Admin (Benjamin), Manager (Anne, Franklin), Staff (Receptionist). The public website is a separate catalog; IMS imports a price/photo snapshot only.
 
 ### 1.1 System Credentials
 
@@ -18,19 +18,19 @@ The FRACA SERVCOM Inventory Management System is a web-based application designe
 |------|-------|
 | Application URL | http://localhost:8000 |
 | App Name | FRACA SERVCOM Inventory Management System |
-| Database | MySQL — `fraca_inventory` |
-| DB Host | 127.0.0.1 |
-| DB Port | 3306 |
-| DB Username | root |
-| DB Password | *(empty — default XAMPP/local)* |
+| Database | SQLite (default) or MySQL `fraca_inventory` |
+| Timezone | Africa/Nairobi |
 
-**Seeded user accounts** (created by `php artisan migrate --seed`):
+**Seeded user accounts** (`php artisan migrate --seed`). Password: `FRACASERVCOM_STAFF_PASSWORD` (default `Frac@Servcom2026`):
 
-| Email | Password | Role |
+| Email | Person | Role |
 |-------|----------|------|
-| admin@inventory.com | password123 | Admin |
-| manager@inventory.com | password123 | Manager |
-| staff@inventory.com | password123 | Staff |
+| benjamin@fracaservcomltd.co.ke | Benjamin Shitsukane | Admin |
+| anne@fracaservcomltd.co.ke | Anne Jerubet | Manager |
+| franklin@fracaservcomltd.co.ke | Franklin Shitsukane | Manager |
+| reception@fracaservcomltd.co.ke | Receptionist | Staff |
+
+Public `/register` is removed. Demo `*@inventory.com` users are deactivated.
 
 ---
 
@@ -48,8 +48,8 @@ The FRACA SERVCOM Inventory Management System is a web-based application designe
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
-| Backend Framework | Laravel 11 (PHP 8.2) | Mature ecosystem, Eloquent ORM, built-in auth scaffolding, artisan CLI |
-| Database | MySQL (`fraca_inventory`) | Relational integrity for stock/sales/purchase transactions |
+| Backend Framework | Laravel 12 (PHP 8.2) | Eloquent ORM, Breeze auth, artisan CLI |
+| Database | SQLite or MySQL | Relational integrity for stock/sales/purchase transactions |
 | Frontend Build | Vite | Fast HMR, native ES module support, replaces Laravel Mix |
 | CSS Framework | Bootstrap 5 | Responsive grid, modal system, utility classes — no jQuery dependency |
 | JavaScript | Vanilla ES6+ (class-based modules) | No framework overhead; full control over DOM and API calls |
@@ -175,7 +175,7 @@ resources/js/
 |------|-------------|
 | Admin | Full system access including hard deletes and user management |
 | Manager | Full access except hard deletes; deletes require admin verification |
-| Staff | Read-only + create sales and purchases only |
+| Staff | Reception: create customers and sales; no cost, no price edits, no reports |
 
 ### 5.2 Permission Matrix
 
@@ -184,20 +184,22 @@ resources/js/
 | view-product / view-category / view-supplier / view-customer | ✓ | ✓ | ✓ |
 | create-product / edit-product | ✓ | ✓ | ✗ |
 | delete-product / delete-category / delete-sale / delete-purchase | ✓ | ✗* | ✗ |
-| create-sale / create-purchase | ✓ | ✓ | ✓ |
+| create-sale | ✓ | ✓ | ✓ |
+| create-purchase | ✓ | ✓ | ✗ |
+| create-customer / edit-customer | ✓ | ✓ | ✓ |
 | edit-sale / edit-purchase | ✓ | ✓ | ✗ |
 | manage-stock | ✓ | ✓ | ✗ |
-| view-report / export-report | ✓ | ✓ | ✓ |
+| view-report / export-report | ✓ | ✓ | ✗ |
 | view-user / create-user / edit-user / delete-user | ✓ | ✗ | ✗ |
 
 *Manager delete operations trigger an Admin Verification Modal requiring admin credentials.
 
 ### 5.3 Enforcement Layers
 
-- **Route level:** `middleware('permission:view-product')` on web routes
-- **API level:** Controllers check `auth()->user()->role->rolePermissions` (implicit via middleware)
-- **UI level:** `window.utils.hasPermission()` / `hasAnyPermission()` controls button visibility
-- **Admin verify:** `POST /api/verify-admin` validates admin credentials before destructive operations
+- **Route and API level:** `middleware('permission:…')` on every web page and every API verb
+- **JSON 401/403:** `CheckPermission` returns JSON for `expectsJson()` requests
+- **UI level:** `window.utils.hasPermission()` / `hasAnyPermission()` plus `can_see_cost`
+- **Admin verify:** `POST /api/verify-admin` before destructive manager operations
 
 ### 5.4 Data Flow for Permissions
 
@@ -251,10 +253,10 @@ All API responses follow a consistent envelope via `BaseController`:
 
 ### 6.3 Stock Management
 
-Stock changes are tracked via `StockHistory` on every:
-- Purchase creation/update → stock incremented
-- Sale creation/update → stock decremented
-- Manual stock adjustment → stock set to new value with reason logged
+Stock changes are tracked via `SaleStockService` / `StockHistory` on:
+- Purchase received → stock incremented
+- Sale **completed** → stock decremented (pending does not)
+- Manual stock adjustment → stock set with reason logged
 
 Low-stock alerts are generated by the `GenerateStockAlerts` console command (scheduled).
 
@@ -349,13 +351,18 @@ php artisan key:generate
 # DB_USERNAME=root
 # DB_PASSWORD=          ← leave empty for default XAMPP/local setup
 
-# Database — create the DB first, then migrate and seed
+# Database — SQLite works out of the box; or set MySQL in .env then:
 php artisan migrate --seed
 
-# Default seeded accounts:
-#   admin@inventory.com    / password123  (Admin)
-#   manager@inventory.com  / password123  (Manager)
-#   staff@inventory.com    / password123  (Staff)
+# Named staff (not demo emails):
+#   benjamin@fracaservcomltd.co.ke   Admin
+#   anne@fracaservcomltd.co.ke       Manager
+#   franklin@fracaservcomltd.co.ke   Manager
+#   reception@fracaservcomltd.co.ke  Staff
+# Password: FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
+
+# Refresh catalog from the public website copy:
+#   node database/scripts/extract-website-catalog.mjs
 
 # Start servers
 php artisan serve          # Backend: http://localhost:8000

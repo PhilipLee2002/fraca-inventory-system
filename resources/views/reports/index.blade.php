@@ -145,10 +145,10 @@
                     <table class="table table-hover align-middle mb-0" id="table-sales">
                         <thead class="table-dark">
                             <tr><th>Invoice #</th><th>Customer</th><th>Date</th>
-                                <th class="text-end">Amount</th><th class="text-center">Status</th></tr>
+                                <th>Payment</th><th class="text-end">Amount</th><th class="text-center">Status</th></tr>
                         </thead>
                         <tbody id="tbody-sales">
-                            <tr><td colspan="5" class="text-center text-muted py-4">Click Generate to load report.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">Click Generate to load report.</td></tr>
                         </tbody>
                     </table>
                 </div>

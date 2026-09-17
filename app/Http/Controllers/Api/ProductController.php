@@ -46,6 +46,7 @@ class ProductController extends BaseController
             $query->orderBy($sortBy, $sortOrder);
 
             $products = $query->paginate($request->get('per_page', 20));
+            $this->hideCostFromStaff($products);
 
             return $this->sendPaginated($products, 'Products retrieved successfully');
 
@@ -67,6 +68,7 @@ class ProductController extends BaseController
             DB::commit();
 
             $product->load(['category', 'supplier']);
+            $this->hideCostFromStaff($product);
             return $this->sendCreated($product, 'Product created successfully');
 
         } catch (\Exception $e) {
@@ -84,6 +86,7 @@ class ProductController extends BaseController
             $product->load(['category', 'supplier', 'stockHistories' => function($query) {
                 $query->latest()->limit(20);
             }]);
+            $this->hideCostFromStaff($product);
 
             return $this->sendSuccess($product, 'Product retrieved successfully');
 
@@ -105,6 +108,7 @@ class ProductController extends BaseController
             DB::commit();
 
             $product->load(['category', 'supplier']);
+            $this->hideCostFromStaff($product);
             return $this->sendUpdated($product, 'Product updated successfully');
 
         } catch (\Exception $e) {
@@ -157,6 +161,7 @@ class ProductController extends BaseController
                 ->where('is_active', true);
 
             $products = $query->paginate($request->get('per_page', 20));
+            $this->hideCostFromStaff($products);
 
             return $this->sendPaginated($products, 'Low stock products retrieved successfully');
 
