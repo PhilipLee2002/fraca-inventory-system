@@ -20,7 +20,11 @@ class UsersTableSeeder extends Seeder
             return;
         }
 
-        $password = Hash::make(env('FRACASERVCOM_STAFF_PASSWORD', 'Frac@Servcom2026'));
+        $plain = env('FRACASERVCOM_STAFF_PASSWORD');
+        if (! is_string($plain) || $plain === '') {
+            throw new \RuntimeException('Set FRACASERVCOM_STAFF_PASSWORD in .env before seeding.');
+        }
+        $password = Hash::make($plain);
 
         $users = [
             [

@@ -36,16 +36,7 @@ Open your browser and navigate to the system URL (e.g., `http://localhost:8000` 
 
 > **[SCREENSHOT: Login page — show the login form with email/password fields and the Log In button]**
 
-**Seeded accounts** (change the password after first login; override with `FRACASERVCOM_STAFF_PASSWORD` in `.env`):
-
-| Email | Person | Role |
-|-------|----------|------|
-| benjamin@fracaservcomltd.co.ke | Benjamin Shitsukane | Admin |
-| anne@fracaservcomltd.co.ke | Anne Jerubet | Manager |
-| franklin@fracaservcomltd.co.ke | Franklin Shitsukane | Manager |
-| reception@fracaservcomltd.co.ke | Receptionist | Staff |
-
-Default password: `Frac@Servcom2026`. There is no public **Register** page. Ask Benjamin or the receptionist if a password needs resetting.
+**Seeded accounts** use the emails in the user seeder. Set `FRACASERVCOM_STAFF_PASSWORD` in your local `.env` before `php artisan migrate --seed`. There is no public **Register** page.
 
 Old demo emails (`admin@inventory.com` and similar) are turned off.
 

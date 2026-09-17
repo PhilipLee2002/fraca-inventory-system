@@ -21,7 +21,7 @@ The FRACA SERVCOM Inventory Management System is the shop book for furniture and
 | Database | SQLite (default) or MySQL `fraca_inventory` |
 | Timezone | Africa/Nairobi |
 
-**Seeded user accounts** (`php artisan migrate --seed`). Password: `FRACASERVCOM_STAFF_PASSWORD` (default `Frac@Servcom2026`):
+**Seeded user accounts** (`php artisan migrate --seed`). Password: `FRACASERVCOM_STAFF_PASSWORD` from `.env`:
 
 | Email | Person | Role |
 |-------|----------|------|
@@ -359,7 +359,7 @@ php artisan migrate --seed
 #   anne@fracaservcomltd.co.ke       Manager
 #   franklin@fracaservcomltd.co.ke   Manager
 #   reception@fracaservcomltd.co.ke  Staff
-# Password: FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
+# Password: FRACASERVCOM_STAFF_PASSWORD from .env
 
 # Refresh catalog from the public website copy:
 #   node database/scripts/extract-website-catalog.mjs

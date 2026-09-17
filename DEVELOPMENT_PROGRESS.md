@@ -28,7 +28,7 @@ Re-seed after pulling: `php artisan migrate --seed`. Catalog refresh: `node data
 
 ### Seeded logins
 
-Password: `FRACASERVCOM_STAFF_PASSWORD` (default `Frac@Servcom2026`). Change after first login.
+Password: set `FRACASERVCOM_STAFF_PASSWORD` in `.env` before seeding. Do not commit a real password.
 
 - Benjamin (Admin), Anne (Manager / accountant), Franklin (Manager / store), Receptionist (Staff)
 - Demo `*@inventory.com` accounts are deactivated

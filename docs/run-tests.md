@@ -357,7 +357,7 @@ benjamin@fracaservcomltd.co.ke  (Admin)
 anne@fracaservcomltd.co.ke      (Accountant)
 franklin@fracaservcomltd.co.ke  (Store)
 reception@fracaservcomltd.co.ke (Reception)
-Password: FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
+Password: FRACASERVCOM_STAFF_PASSWORD from your local .env
 ```
 
 PHPUnit uses factory users with password `password`, not these emails.

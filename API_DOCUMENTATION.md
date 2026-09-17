@@ -28,7 +28,7 @@ Content-Type: application/json
 ```json
 {
   "email": "benjamin@fracaservcomltd.co.ke",
-  "password": "Frac@Servcom2026"
+  "password": "your-local-password"
 }
 ```
 
@@ -493,7 +493,7 @@ Benjamin (Admin):   benjamin@fracaservcomltd.co.ke
 Anne (Manager):     anne@fracaservcomltd.co.ke
 Franklin (Manager): franklin@fracaservcomltd.co.ke
 Reception (Staff):  reception@fracaservcomltd.co.ke
-Password:           FRACASERVCOM_STAFF_PASSWORD (default Frac@Servcom2026)
+Password:           FRACASERVCOM_STAFF_PASSWORD from your local .env
 ```
 
 Demo `admin@inventory.com` / `password123` accounts are deactivated.
